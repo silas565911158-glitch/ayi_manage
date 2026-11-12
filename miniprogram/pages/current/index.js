@@ -7,6 +7,7 @@ const {
   formatCompactDateWithYear,
   formatCompactMoney,
   formatMoney,
+  getTransferProofUrl,
   formatShanghaiClockTime
 } = require('../../services/view-state');
 
@@ -267,8 +268,8 @@ Page({
   previewProof(event) {
     const proofs = this.data.state.pendingSettlement.transferProofs;
     wx.previewImage({
-      current: proofs[Number(event.currentTarget.dataset.index)].fileId,
-      urls: proofs.map((item) => item.fileId)
+      current: getTransferProofUrl(proofs[Number(event.currentTarget.dataset.index)]),
+      urls: proofs.map(getTransferProofUrl)
     });
   },
 

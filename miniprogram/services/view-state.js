@@ -103,6 +103,11 @@ function formatSettlementDifference(difference) {
     : `实付少 ${formatMoney(Math.abs(number))}`;
 }
 
+function getTransferProofUrl(proof) {
+  if (!proof) return '';
+  return proof.temporaryUrl || proof.fileId || '';
+}
+
 function buildSettlementExplanation({
   totalAmount,
   targetDays,
@@ -180,6 +185,7 @@ module.exports = {
   formatDisplayDate,
   formatCompactMoney,
   formatMoney,
+  getTransferProofUrl,
   formatShanghaiDateInput,
   formatShanghaiClockTime
 };

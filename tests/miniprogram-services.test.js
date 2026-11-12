@@ -149,6 +149,7 @@ describe('mini program services', () => {
       formatChineseDate,
       formatCompactDateWithYear,
       formatCompactMoney,
+      getTransferProofUrl,
       formatShanghaiDateInput,
       formatShanghaiClockTime
     } = require('../miniprogram/services/view-state');
@@ -191,6 +192,12 @@ describe('mini program services', () => {
     expect(formatCompactDateWithYear('2026-11-10')).toBe('2026.11.10');
     expect(formatCompactMoney(16000)).toBe('¥16,000');
     expect(formatCompactMoney(16000.5)).toBe('¥16,000.50');
+    expect(getTransferProofUrl({
+      fileId: 'cloud://env/proof.jpg',
+      temporaryUrl: 'https://temp.example/proof.jpg'
+    })).toBe('https://temp.example/proof.jpg');
+    expect(getTransferProofUrl({ fileId: 'cloud://env/proof.jpg' }))
+      .toBe('cloud://env/proof.jpg');
     expect(formatShanghaiDateInput(new Date('2026-11-11T15:59:08.000Z'))).toBe('2026-11-11');
     expect(formatShanghaiDateInput(new Date('2026-11-11T16:00:08.000Z'))).toBe('2026-11-12');
     expect(formatShanghaiClockTime('2026-11-12T06:32:08.000Z')).toBe('14:32');

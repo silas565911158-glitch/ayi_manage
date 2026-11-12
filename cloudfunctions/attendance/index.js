@@ -31,6 +31,7 @@ function createHandler({
         now: now(),
         repository
       });
+      await addTemporaryTransferProofUrls(data, sdk);
       return { ok: true, data };
     } catch (error) {
       if (error instanceof BusinessError) {
@@ -41,5 +42,48 @@ function createHandler({
   };
 }
 
+async function addTemporaryTransferProofUrls(data, sdk) {
+  if (!data || !sdk || typeof sdk.getTempFileURL !== 'function') return data;
+
+  const proofGroups = [];
+  collectTransferProofGroups(data, proofGroups);
+  const proofs = proofGroups
+    .flat()
+    .filter((proof) => proof && typeof proof.fileId === 'string' && proof.fileId.startsWith('cloud://'));
+  if (proofs.length === 0) return data;
+
+  try {
+    const result = await sdk.getTempFileURL({
+      fileList: proofs.map((proof) => proof.fileId)
+    });
+    const fileList = Array.isArray(result) ? result : result.fileList || [];
+    const urls = new Map();
+    fileList.forEach((item) => {
+      if (item && item.fileID && item.tempFileURL) {
+        urls.set(item.fileID, item.tempFileURL);
+      }
+    });
+    proofs.forEach((proof) => {
+      const temporaryUrl = urls.get(proof.fileId);
+      if (temporaryUrl) proof.temporaryUrl = temporaryUrl;
+    });
+  } catch (error) {
+    // Transfer proofs remain available to their uploader. A temporary URL is only
+    // needed so the other participant can view a file from a private bucket.
+  }
+  return data;
+}
+
+function collectTransferProofGroups(value, groups) {
+  if (!value || typeof value !== 'object') return;
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectTransferProofGroups(item, groups));
+    return;
+  }
+  if (Array.isArray(value.transferProofs)) groups.push(value.transferProofs);
+  Object.values(value).forEach((child) => collectTransferProofGroups(child, groups));
+}
+
 exports.createHandler = createHandler;
+exports.addTemporaryTransferProofUrls = addTemporaryTransferProofUrls;
 exports.main = createHandler();

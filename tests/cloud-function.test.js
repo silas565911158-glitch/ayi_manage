@@ -73,4 +73,47 @@ describe('attendance cloud function', () => {
     const result = await handler({ action: 'joinContract', payload: { inviteCode: 'ABCDEFGH' } });
     expect(result).toMatchObject({ ok: true, data: { contract: { employeeOpenid: 'openid-server' } } });
   });
+
+  test('adds temporary URLs to private transfer proofs', async () => {
+    const { addTemporaryTransferProofUrls } = require('../cloudfunctions/attendance/index');
+    const cloudSDK = {
+      getTempFileURL: async ({ fileList }) => ({
+        fileList: fileList.map((fileId) => ({
+          fileID: fileId,
+          tempFileURL: `https://temp.example/${encodeURIComponent(fileId)}`
+        }))
+      })
+    };
+    const data = {
+      pendingSettlement: {
+        transferProofs: [{ fileId: 'cloud://env/proof-1.jpg' }]
+      },
+      settlements: [
+        { transferProofs: [{ fileId: 'cloud://env/proof-2.jpg' }] },
+        { transferProofs: [] }
+      ]
+    };
+
+    await addTemporaryTransferProofUrls(data, cloudSDK);
+
+    expect(data.pendingSettlement.transferProofs[0].temporaryUrl)
+      .toBe('https://temp.example/cloud%3A%2F%2Fenv%2Fproof-1.jpg');
+    expect(data.settlements[0].transferProofs[0].temporaryUrl)
+      .toBe('https://temp.example/cloud%3A%2F%2Fenv%2Fproof-2.jpg');
+  });
+
+  test('keeps transfer proofs available when temporary URL generation is unavailable', async () => {
+    const { addTemporaryTransferProofUrls } = require('../cloudfunctions/attendance/index');
+    const data = {
+      pendingSettlement: {
+        transferProofs: [{ fileId: 'cloud://env/proof.jpg' }]
+      }
+    };
+
+    await addTemporaryTransferProofUrls(data, undefined);
+
+    expect(data.pendingSettlement.transferProofs[0]).toEqual({
+      fileId: 'cloud://env/proof.jpg'
+    });
+  });
 });

@@ -90,7 +90,7 @@
       <view wx:if="{{pendingExplanation.differenceText}}" class="difference-text">{{pendingExplanation.differenceText}}</view>
       <view wx:if="{{state.pendingSettlement.differenceReason}}" class="difference-reason">原因：{{state.pendingSettlement.differenceReason}}</view>
       <view class="proof-row" wx:if="{{state.pendingSettlement.transferProofs.length}}">
-        <image wx:for="{{state.pendingSettlement.transferProofs}}" wx:key="fileId" src="{{item.fileId}}" mode="aspectFill" bindtap="previewProof" data-index="{{index}}" />
+        <image wx:for="{{state.pendingSettlement.transferProofs}}" wx:key="fileId" src="{{item.temporaryUrl || item.fileId}}" mode="aspectFill" bindtap="previewProof" data-index="{{index}}" />
       </view>
       <view class="quiet" wx:else>未上传转账截图</view>
       <button wx:if="{{role === 'employee'}}" class="plain-button" hover-class="button-hover" bindtap="disputeSettlement">金额不对，联系雇主</button>

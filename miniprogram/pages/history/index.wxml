@@ -34,7 +34,7 @@
     <view wx:if="{{item.calculation.differenceText}}" class="difference">{{item.calculation.differenceText}}</view>
     <view wx:if="{{item.differenceReason}}" class="difference-reason">原因：{{item.differenceReason}}</view>
     <view class="proofs" wx:if="{{item.transferProofs.length}}">
-      <image wx:for="{{item.transferProofs}}" wx:for-item="proof" wx:key="fileId" src="{{proof.fileId}}" mode="aspectFill" data-url="{{proof.fileId}}" bindtap="previewProof" />
+      <image wx:for="{{item.transferProofs}}" wx:for-item="proof" wx:key="fileId" src="{{proof.temporaryUrl || proof.fileId}}" mode="aspectFill" data-url="{{proof.temporaryUrl || proof.fileId}}" bindtap="previewProof" />
     </view>
   </view>
   </block>

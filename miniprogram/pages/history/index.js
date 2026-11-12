@@ -54,8 +54,7 @@ Page({
   },
 
   previewProof(event) {
-    const urls = this.data.settlements
-      .flatMap((item) => item.transferProofs.map((proof) => proof.fileId));
-    wx.previewImage({ current: event.currentTarget.dataset.url, urls });
+    wx.previewImage({ current: event.currentTarget.dataset.url, urls: this.data.settlements
+      .flatMap((item) => item.transferProofs.map((proof) => proof.temporaryUrl || proof.fileId)) });
   }
 });
