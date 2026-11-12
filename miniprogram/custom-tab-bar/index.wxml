@@ -1,0 +1,11 @@
+<view class="tab-bar">
+  <view class="tab-inner">
+  <view
+    wx:for="{{items}}"
+    wx:key="path"
+    class="tab-item {{index === 1 ? 'tab-item-divider' : ''}} {{selected === index ? 'active' : ''}}"
+    data-index="{{index}}"
+    bindtap="switchTab"
+  >{{item.text}}</view>
+  </view>
+</view>

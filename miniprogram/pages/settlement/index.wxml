@@ -1,0 +1,48 @@
+<view class="page settlement-page">
+  <block wx:if="{{state}}">
+    <view class="settle-card">
+      <view class="range-title">这一期工作日期</view>
+      <view class="range">{{workRangeText}}</view>
+      <view class="note">今天 {{today}} 不计入考勤；阿姨确认后可继续打卡。</view>
+      <view class="fact-row">
+        <view>
+          <view class="mini-label">已干</view>
+          <view class="fact">{{state.currentStage.days}} 天</view>
+        </view>
+        <view>
+          <view class="mini-label">日薪</view>
+          <view class="fact">{{dailySalaryText}}</view>
+        </view>
+      </view>
+      <view class="calculation-card">
+        <view class="calculation-label">合同口径</view>
+        <view class="calculation-line">{{calculation.contractText}} = {{calculation.dailySalaryText}}</view>
+        <view class="calculation-label secondary">本期计算</view>
+        <view class="calculation-line">{{calculation.calculationText}} = {{calculation.suggestedText}}</view>
+        <view class="calculation-formula">{{calculation.formulaText}} = {{suggestedText}}</view>
+        <view class="suggest">按合同计算 {{suggestedText}}</view>
+      </view>
+      <view class="field">
+        <view class="field-label">实际支付金额（元）</view>
+        <input class="money-input" type="digit" value="{{paidAmount}}" bindinput="onPaidInput" />
+      </view>
+      <view class="field">
+        <view class="field-label">差额原因</view>
+        <input class="reason-input" value="{{differenceReason}}" bindinput="onReasonInput" placeholder="实付与计算不一致时必填" />
+      </view>
+      <view class="field">
+        <view class="field-label">转账截图（必填，最多3张）</view>
+        <view class="images">
+          <view wx:for="{{images}}" wx:key="path" class="image-wrap">
+            <image src="{{item.path}}" mode="aspectFill" bindtap="previewImage" data-index="{{index}}" />
+            <button class="remove" bindtap="removeImage" data-index="{{index}}">×</button>
+          </view>
+          <button wx:if="{{images.length < 3}}" class="add-image" hover-class="button-hover" bindtap="chooseImage">+</button>
+        </view>
+      </view>
+      <button class="primary-button" hover-class="button-hover" bindtap="submit" disabled="{{submitting || state.today.checkedIn}}">{{submitting ? '正在发送…' : '发给阿姨确认'}}</button>
+      <view wx:if="{{error}}" class="error-text">{{error}}</view>
+    </view>
+  </block>
+  <view wx:else class="quiet">正在读取……</view>
+</view>

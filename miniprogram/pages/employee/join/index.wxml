@@ -1,0 +1,30 @@
+<view class="page flow-page join-page">
+  <view class="flow-title">输入匹配码</view>
+  <text class="flow-lead">先查看合作信息，确认没有问题后再确认匹配。</text>
+
+  <view class="flow-card">
+    <input class="code-input" maxlength="8" value="{{inviteCode}}" bindinput="onCodeInput" placeholder="ABCDEFGH" />
+    <text class="field-help">8 位大写字母和数字，可粘贴后自动去空格。</text>
+    <button class="button-primary" hover-class="button-hover" bindtap="previewInvite" disabled="{{checking}}">
+      {{checking ? '正在核对…' : '查看合作信息'}}
+    </button>
+    <view class="status-error" wx:if="{{error}}">{{error}}</view>
+    <button
+      class="button-plain restart-button"
+      hover-class="button-hover"
+      bindtap="restartIdentity"
+    >重新选择身份</button>
+  </view>
+
+  <view class="flow-card" wx:if="{{preview}}">
+    <view class="check-title">核对合作信息</view>
+    <view class="summary-row"><text>合作定价</text><text>{{preview.totalAmount}} 元 / {{preview.targetDays}} 天</text></view>
+    <view class="summary-row"><text>日薪</text><text>{{previewDailySalaryText}} / 天</text></view>
+    <view class="summary-row"><text>开始日期</text><text>{{preview.startDate}}</text></view>
+    <view class="summary-row"><text>家庭地址</text><text>{{preview.address}}</text></view>
+    <view class="summary-row"><text>围栏半径</text><text>{{preview.radiusMeters}} 米</text></view>
+    <button class="button-primary" hover-class="button-hover" bindtap="confirmJoin" disabled="{{submitting}}">
+      {{submitting ? '正在匹配…' : '确认匹配'}}
+    </button>
+  </view>
+</view>

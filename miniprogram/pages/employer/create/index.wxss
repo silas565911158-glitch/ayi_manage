@@ -1,0 +1,47 @@
+.flow-page.create-page {
+  padding-top: 32rpx;
+}
+
+.create-page .flow-title {
+  margin-top: 0;
+}
+
+.form-section + .form-section {
+  margin-top: 36rpx;
+  padding-top: 30rpx;
+  border-top: 2rpx solid #eadfd0;
+}
+
+.section-title {
+  margin-bottom: 6rpx;
+  color: #22262d;
+  font-size: 34rpx;
+  font-weight: 700;
+}
+
+.pricing-box {
+  margin-top: 20rpx;
+  padding: 24rpx;
+  border-radius: 16rpx;
+  background: #22262d;
+  color: #fff;
+}
+
+.pricing-title {
+  font-size: 40rpx;
+  font-weight: 700;
+}
+
+.pricing-formula {
+  margin-top: 4rpx;
+  color: #d8d1c3;
+  font-size: 30rpx;
+}
+
+.location-button {
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 16rpx;
+  white-space: nowrap;
+}
+

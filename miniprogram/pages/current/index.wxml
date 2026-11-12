@@ -1,0 +1,162 @@
+<view class="page current-page">
+  <view wx:if="{{loading}}" class="quiet">正在读取……</view>
+
+  <view wx:elif="{{!state || !state.contract}}" class="empty-main">
+    <view class="empty-title">还没有建立合作</view>
+    <view class="empty-desc">请先完成身份选择和匹配。</view>
+    <button wx:if="{{role === 'employer'}}" class="primary-button" hover-class="button-hover" bindtap="goCreate">创建合作</button>
+    <button wx:elif="{{role === 'employee'}}" class="primary-button" hover-class="button-hover" bindtap="goJoin">输入匹配码</button>
+    <button wx:else class="primary-button" hover-class="button-hover" bindtap="goOnboarding">选择身份</button>
+  </view>
+
+  <block wx:else>
+    <view class="stage-summary-card">
+      <view class="stage-card-top">
+        <view class="stage-leading"></view>
+        <view class="stage-context">第 {{state.currentStage.stageIndex}} 期 · {{stageStartText}}开始</view>
+        <view
+          class="auxiliary-trigger"
+          hover-class="button-hover"
+          aria-role="button"
+          aria-label="更多操作"
+          bindtap="toggleAuxiliary"
+        ><view class="auxiliary-icon">⋯</view></view>
+      </view>
+
+      <view class="summary-metrics">
+        <view class="metric metric-primary">
+          <view class="metric-value-row">
+            <text class="metric-value">{{state.currentStage.days}}</text>
+            <text class="metric-unit">天</text>
+          </view>
+          <view class="metric-label">本期已上工</view>
+        </view>
+
+        <view class="metric-divider"></view>
+
+        <view wx:if="{{role === 'employee'}}" class="metric today-status">
+          <view wx:if="{{state.today.checkedIn}}" class="checkin-done">
+            <view class="face-row">
+              <text class="checkin-face">😊</text>
+            </view>
+            <view class="checkin-copy">
+              <text class="checkin-time">{{todayClockText}}打卡</text>
+            </view>
+          </view>
+          <view wx:else class="checkin-locked">
+            <view class="face-row">
+              <text class="checkin-face muted-face">🙂</text>
+            </view>
+            <view class="checkin-copy">
+              <text class="checkin-time">今日未打卡</text>
+            </view>
+          </view>
+        </view>
+
+        <view wx:else class="metric today-status">
+          <view class="metric-value-row">
+            <text class="metric-value">{{totalPaidCompactText}}</text>
+          </view>
+          <view class="metric-label">累计支付{{state.settlementSummary.settledStages}}期</view>
+        </view>
+      </view>
+
+      <view wx:if="{{showAuxiliary}}" class="auxiliary-panel">
+        <button class="auxiliary-button" hover-class="button-hover" bindtap="toggleContract">合作信息</button>
+        <button wx:if="{{isMock && role === 'employer'}}" class="auxiliary-button" hover-class="button-hover" bindtap="switchMockRole" data-role="employee">体验阿姨端</button>
+        <button wx:if="{{isMock && role === 'employee'}}" class="auxiliary-button" hover-class="button-hover" bindtap="switchMockRole" data-role="employer">体验雇主端</button>
+        <button wx:if="{{isMock}}" class="auxiliary-button danger" hover-class="button-hover" bindtap="resetMockData">重置数据</button>
+      </view>
+
+      <view wx:if="{{showContract}}" class="contract-box">
+        <view class="contract-row"><text>日薪</text><text>{{dailySalaryText}} / 天</text></view>
+        <view class="contract-row"><text>合作定价</text><text>{{state.contract.totalAmount}} 元 / {{state.contract.targetDays}} 天</text></view>
+        <view class="contract-row"><text>家庭地址</text><text>{{state.contract.homeLocation.address}}</text></view>
+        <view class="contract-row"><text>围栏半径</text><text>{{state.contract.radiusMeters}} 米</text></view>
+      </view>
+    </view>
+
+    <view wx:if="{{reminderText}}" class="reminder">{{reminderText}}</view>
+
+    <view wx:if="{{state.pendingSettlement}}" class="pending-card {{state.pendingSettlement.status}}">
+      <view class="pending-title">{{pendingTitle}}</view>
+      <view class="pending-days">这一期干了 {{state.pendingSettlement.days}} 天</view>
+      <view class="pending-calculation">
+        <view class="formula-main">{{pendingExplanation.formulaText}} = {{pendingExplanation.suggestedText}}</view>
+        <view class="formula-sub">{{pendingExplanation.contractText}} = {{pendingExplanation.dailySalaryText}}</view>
+        <view class="formula-sub">{{pendingExplanation.calculationText}} = {{pendingExplanation.suggestedText}}</view>
+      </view>
+      <view class="pending-amount">实付 {{paidText}}</view>
+      <view wx:if="{{pendingExplanation.differenceText}}" class="difference-text">{{pendingExplanation.differenceText}}</view>
+      <view wx:if="{{state.pendingSettlement.differenceReason}}" class="difference-reason">原因：{{state.pendingSettlement.differenceReason}}</view>
+      <view class="proof-row" wx:if="{{state.pendingSettlement.transferProofs.length}}">
+        <image wx:for="{{state.pendingSettlement.transferProofs}}" wx:key="fileId" src="{{item.fileId}}" mode="aspectFill" bindtap="previewProof" data-index="{{index}}" />
+      </view>
+      <view class="quiet" wx:else>未上传转账截图</view>
+      <button wx:if="{{role === 'employee'}}" class="plain-button" hover-class="button-hover" bindtap="disputeSettlement">金额不对，联系雇主</button>
+      <button wx:if="{{role === 'employer'}}" class="plain-button" hover-class="button-hover" bindtap="cancelSettlement">取消本次结算</button>
+    </view>
+
+    <view wx:if="{{error}}" class="stage-error">{{error}}</view>
+
+    <view class="calendar-panel">
+      <view class="calendar-header">
+        <view
+          class="calendar-arrow calendar-arrow-prev {{canPrevMonth ? '' : 'disabled'}}"
+          hover-class="calendar-arrow-hover"
+          aria-role="button"
+          aria-label="上一个月"
+          aria-disabled="{{!canPrevMonth}}"
+          bindtap="prevMonth"
+        >‹</view>
+        <view class="calendar-month">{{calendar.title}}</view>
+        <view
+          class="calendar-arrow calendar-arrow-next {{canNextMonth ? '' : 'disabled'}}"
+          hover-class="calendar-arrow-hover"
+          aria-role="button"
+          aria-label="下一个月"
+          aria-disabled="{{!canNextMonth}}"
+          bindtap="nextMonth"
+        >›</view>
+      </view>
+      <view class="weekday-row">
+        <text wx:for="{{calendar.weekdays}}" wx:key="*this">{{item}}</text>
+      </view>
+      <view class="calendar-grid">
+        <view wx:for="{{calendar.weeks}}" wx:for-index="weekIndex" wx:key="weekIndex" class="calendar-week">
+          <view wx:for="{{item}}" wx:for-item="day" wx:for-index="dayIndex" wx:key="dayIndex" class="day-cell {{day.checkedIn ? 'checked' : ''}} {{day.settled ? 'settled' : ''}} {{day.today ? 'today' : ''}} {{day.future ? 'future' : ''}} {{day.settled ? '' : (day.withinStage ? '' : 'outside')}}">
+            <text class="day-number">{{day.day || ''}}</text>
+            <text class="day-mark">{{day.markText}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{role === 'employee'}}" class="bottom-action-bar">
+      <view
+        wx:if="{{state.pendingSettlement && state.pendingSettlement.status === 'pending_employee'}}"
+        class="bottom-settlement-button"
+        hover-class="button-hover"
+        aria-role="button"
+        bindtap="confirmSettlement"
+      >确认结算</view>
+      <view
+        class="bottom-checkin-button {{checkingIn || bottomCheckinDisabled ? 'disabled' : ''}}"
+        hover-class="{{checkingIn || bottomCheckinDisabled ? 'none' : 'button-hover'}}"
+        aria-role="button"
+        aria-disabled="{{checkingIn || bottomCheckinDisabled}}"
+        bindtap="checkin"
+      >{{checkingIn ? '正在定位…' : bottomCheckinText}}</view>
+    </view>
+
+    <view wx:elif="{{role === 'employer'}}" class="bottom-action-bar">
+      <view
+        class="bottom-settlement-button {{state.pendingSettlement || state.currentStage.days < 1 || state.today.checkedIn ? 'disabled' : ''}}"
+        hover-class="{{state.pendingSettlement || state.currentStage.days < 1 || state.today.checkedIn ? 'none' : 'button-hover'}}"
+        aria-role="button"
+        aria-disabled="{{state.pendingSettlement || state.currentStage.days < 1 || state.today.checkedIn}}"
+        bindtap="goSettlement"
+      >{{state.pendingSettlement ? '等待阿姨确认' : state.currentStage.days < 1 ? '暂无可结算' : state.today.checkedIn ? '明日可结算' : '结算这一期'}}</view>
+    </view>
+  </block>
+</view>

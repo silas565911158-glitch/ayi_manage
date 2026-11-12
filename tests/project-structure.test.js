@@ -1,0 +1,320 @@
+const fs = require('fs');
+const path = require('path');
+
+describe('project structure', () => {
+  test('declares and provides every mini program page', () => {
+    const app = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'miniprogram', 'app.json'), 'utf8'));
+    const expectedPages = [
+      'pages/current/index',
+      'pages/onboarding/index',
+      'pages/employer/create/index',
+      'pages/employer/waiting/index',
+      'pages/employee/join/index',
+      'pages/history/index',
+      'pages/settlement/index'
+    ];
+    expect(app.pages).toEqual(expectedPages);
+    expect(app.pages[0]).toBe('pages/current/index');
+    for (const page of expectedPages) {
+      for (const extension of ['.js', '.json', '.wxml', '.wxss']) {
+        const file = path.join(__dirname, '..', 'miniprogram', `${page}${extension}`);
+        expect({ file, exists: fs.existsSync(file) }).toEqual({ file, exists: true });
+      }
+    }
+  });
+
+  test('uses the configured test AppID, mini program root, cloud root, and mock by default', () => {
+    const project = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'project.config.json'), 'utf8'));
+    expect(project.appid).toBe('wx5c9616725cd03d11');
+    expect(project.miniprogramRoot).toBe('miniprogram/');
+    expect(project.cloudfunctionRoot).toBe('cloudfunctions/');
+    const runtime = require('../miniprogram/config/runtime');
+    expect(runtime.mode).toBe('mock');
+    const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
+    expect(packageJson.scripts.verify).toContain('sync:shared');
+    expect(packageJson.scripts.verify).toContain('jest --runInBand');
+  });
+
+  test('uses a custom bottom tabBar with larger text and a center divider', () => {
+    const app = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'miniprogram', 'app.json'), 'utf8'));
+    expect(app.tabBar).toMatchObject({
+      custom: true,
+      color: '#756E63',
+      selectedColor: '#C9402A',
+      backgroundColor: '#FFFFFF',
+      borderStyle: 'black'
+    });
+    expect(app.tabBar.list.map((item) => item.text)).toEqual(['当期', '历史']);
+    expect(app.tabBar.list.map((item) => item.pagePath)).toEqual(['pages/current/index', 'pages/history/index']);
+    const tabBarWxml = fs.readFileSync(path.join(__dirname, '..', 'miniprogram', 'custom-tab-bar', 'index.wxml'), 'utf8');
+    const tabBarWxss = fs.readFileSync(path.join(__dirname, '..', 'miniprogram', 'custom-tab-bar', 'index.wxss'), 'utf8');
+    const tabBarJs = fs.readFileSync(path.join(__dirname, '..', 'miniprogram', 'custom-tab-bar', 'index.js'), 'utf8');
+    const currentJs = fs.readFileSync(path.join(__dirname, '..', 'miniprogram', 'pages', 'current', 'index.js'), 'utf8');
+    const historyJs = fs.readFileSync(path.join(__dirname, '..', 'miniprogram', 'pages', 'history', 'index.js'), 'utf8');
+    expect(tabBarWxml).toContain('tab-item-divider');
+    expect(tabBarWxml).toContain('tab-inner');
+    expect(tabBarJs).toContain("text: '当期'");
+    expect(currentJs).toContain('getTabBar');
+    expect(historyJs).toContain('getTabBar');
+    expect(tabBarWxss).toContain('font-size: 34rpx');
+    expect(tabBarWxss).toContain('border-left: 2rpx solid');
+    expect(tabBarWxss).toContain('bottom: 0');
+    expect(tabBarWxss).toContain('box-sizing: border-box');
+    expect(tabBarWxss).toContain('padding-bottom: env(safe-area-inset-bottom)');
+    expect(tabBarWxss).toContain('height: 112rpx');
+    expect(tabBarWxss).toContain('width: 100%');
+  });
+
+  test('uses one system font family and a constrained type-weight scale', () => {
+    const rootDirectory = path.join(__dirname, '..', 'miniprogram');
+    const styles = [];
+    const walk = (directory) => {
+      for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+        const current = path.join(directory, entry.name);
+        if (entry.isDirectory()) walk(current);
+        if (entry.isFile() && entry.name.endsWith('.wxss')) {
+          styles.push(fs.readFileSync(current, 'utf8'));
+        }
+      }
+    };
+    walk(rootDirectory);
+    const weights = styles.flatMap((style) => style.match(/font-weight:\s*(\d+)/g) || [])
+      .map((item) => item.match(/(\d+)$/)[1]);
+    const families = styles.flatMap((style) => style.match(/font-family:\s*([^;]+);/g) || []);
+    const sizes = styles.flatMap((style) => style.match(/font-size:\s*(\d+)rpx/g) || [])
+      .map((item) => item.match(/(\d+)rpx$/)[1]);
+    expect(new Set(sizes)).toEqual(new Set(['26', '30', '34', '40', '48', '56', '72']));
+    expect(new Set(weights)).toEqual(new Set(['400', '600', '700']));
+    expect(families).toHaveLength(1);
+    expect(families[0]).toContain('-apple-system');
+    expect(families[0]).toContain('PingFang SC');
+  });
+
+  test('keeps standard action-button typography and centering consistent', () => {
+    const appWxss = fs.readFileSync(path.join(__dirname, '..', 'miniprogram', 'app.wxss'), 'utf8');
+    const joinWxss = fs.readFileSync(path.join(__dirname, '..', 'miniprogram', 'pages', 'employee', 'join', 'index.wxss'), 'utf8');
+    const waitingWxss = fs.readFileSync(path.join(__dirname, '..', 'miniprogram', 'pages', 'employer', 'waiting', 'index.wxss'), 'utf8');
+    const currentWxss = fs.readFileSync(path.join(__dirname, '..', 'miniprogram', 'pages', 'current', 'index.wxss'), 'utf8');
+    for (const stylesheet of [appWxss, currentWxss]) {
+      expect(stylesheet).toContain('align-items: center');
+      expect(stylesheet).toContain('justify-content: center');
+      expect(stylesheet).toContain('font-size: 34rpx');
+      expect(stylesheet).toContain('font-weight: 700');
+    }
+    expect(appWxss).toContain('.button,');
+    expect(appWxss).toContain('.button-primary,');
+    expect(appWxss).toContain('.button-plain {');
+    expect(joinWxss).toContain('.restart-button {');
+    expect(waitingWxss).toContain('.restart-button {');
+  });
+
+  test('renders the compact overview, large calendar, and settlement explanation', () => {
+    const read = (page, extension) =>
+      fs.readFileSync(path.join(__dirname, '..', 'miniprogram', `${page}${extension}`), 'utf8');
+    const currentWxml = read('pages/current/index', '.wxml');
+    const currentWxss = read('pages/current/index', '.wxss');
+    const currentJs = read('pages/current/index', '.js');
+    const currentJson = JSON.parse(read('pages/current/index', '.json'));
+    const settlementWxml = read('pages/settlement/index', '.wxml');
+    const settlementJs = read('pages/settlement/index', '.js');
+    const historyWxml = read('pages/history/index', '.wxml');
+    const historyJs = read('pages/history/index', '.js');
+
+    expect(currentWxml).toContain('stage-summary-card');
+    expect(currentWxml).toContain('stage-leading');
+    expect(currentWxml).toContain('auxiliary-icon');
+    expect(currentWxml).toContain('summary-metrics');
+    expect(currentWxml).toContain('metric-primary');
+    expect(currentWxml).toContain('today-status');
+    expect(currentWxml).toContain('checkin-face');
+    expect(currentWxml).toContain('checkin-done');
+    expect(currentWxml).toContain('{{todayClockText}}打卡');
+    expect(currentWxml).not.toContain('打卡时间');
+    expect(currentWxml).toContain('今日未打卡');
+    expect(currentWxml.indexOf('wx:if="{{state.today.checkedIn}}"'))
+      .toBeLessThan(currentWxml.indexOf('class="calendar-panel"'));
+    expect(currentWxml).toContain('bindtap="checkin"');
+    expect(currentWxml).toContain('checkingIn');
+    expect(currentWxml).toContain('bottom-action-bar');
+    expect(currentWxml).toContain('wx:if="{{role === \'employee\'}}"');
+    expect(currentWxml).toContain('wx:elif="{{role === \'employer\'}}"');
+    expect(currentWxml).toContain('结算这一期');
+    expect(currentWxml).toContain('bottom-settlement-button');
+    expect(currentWxml).toContain('bindtap="confirmSettlement"');
+    expect(currentWxml).toContain('bottomCheckinText');
+    expect(currentWxml).toContain('bottomCheckinDisabled');
+    expect(currentWxml).toContain('face-row');
+    expect(currentWxml).toContain('muted-face');
+    expect(currentWxml.indexOf('class="calendar-panel"'))
+      .toBeLessThan(currentWxml.indexOf('class="bottom-action-bar"'));
+    expect(currentJs).toContain('checkingIn: false');
+    expect(currentJs).toContain('bottomCheckinText: \'\'');
+    expect(currentJs).toContain('bottomCheckinDisabled: false');
+    expect(currentJs).toContain('已打卡');
+    expect(currentJs).toContain('待确认结算');
+    expect(currentWxml).toContain('bindtap="goSettlement"');
+    expect(currentWxml).not.toContain('flat-action-button');
+    expect(currentWxml).toContain('{{totalPaidCompactText}}');
+    expect(currentWxml).toContain('累计支付{{state.settlementSummary.settledStages}}期');
+    expect(currentWxml).not.toContain('quick-links');
+    expect(currentWxml).toContain('auxiliary-panel');
+    expect(currentWxml).not.toContain('checkin-section');
+    expect(currentWxml).not.toContain('employer-action');
+    expect(currentWxml).toContain('本期已上工');
+    expect(currentWxml).not.toContain('本期已上工天数');
+    expect(currentWxml.indexOf('class="metric-label"'))
+      .toBeGreaterThan(currentWxml.indexOf('class="metric-value-row"'));
+    expect(currentWxml).toContain('metric-divider');
+    expect(currentJs).toContain('formatCompactDateWithYear');
+    expect(currentJs).toContain('formatCompactDateWithYear');
+    expect(currentJs).toContain('未开始');
+    expect(currentWxml).not.toContain('checkinButtonText');
+    expect(currentJs).not.toContain('checkinButtonText');
+    expect(currentWxss).toContain('flex: 0 0 auto');
+    expect(currentWxss).toContain('padding-bottom: 20rpx');
+    expect(currentWxss).toContain('height: calc(100vh');
+    expect(currentWxss).toContain('min-height: 0');
+    expect(currentWxss).toContain('overflow: hidden');
+    expect(currentJson.enablePullDownRefresh).toBe(false);
+    expect(currentWxss).toContain('white-space: nowrap');
+    expect(currentWxss.indexOf('.bottom-checkin-button')).toBeLessThan(
+      currentWxss.indexOf('white-space: nowrap', currentWxss.indexOf('.bottom-checkin-button'))
+    );
+    expect(currentWxss).toContain('align-items: stretch');
+    expect(currentWxss).toContain('height: 156rpx');
+    expect(currentWxss).toContain('height: 84rpx');
+    expect(currentWxss).toContain('height: 64rpx');
+    expect(currentWxss).toContain('width: 88rpx');
+    expect(currentWxss).toContain('height: 88rpx');
+    expect(currentWxss).toContain('min-height: 104rpx');
+    expect(currentWxss).toContain('.bottom-settlement-button');
+    expect(currentWxss).toContain('.face-row');
+    expect(currentWxss).toContain('.muted-face');
+    expect(currentWxss).not.toContain('height: 100%');
+    expect(currentWxml).not.toContain('calendar-controls');
+    expect(currentWxml).toContain('calendar-header');
+    expect(currentWxml).toContain('calendar-month');
+    expect(currentWxml.indexOf('calendar-arrow-prev'))
+      .toBeLessThan(currentWxml.indexOf('calendar-month'));
+    expect(currentWxml.indexOf('calendar-month'))
+      .toBeLessThan(currentWxml.indexOf('calendar-arrow-next'));
+    expect(currentWxss).not.toContain('min-height: 620rpx');
+    expect(currentWxml).toContain('day-mark');
+    expect(currentWxml).toContain("day.settled ? 'settled' : ''");
+    expect(currentWxml).toContain("day.withinStage ? '' : 'outside'");
+    expect(currentWxml).not.toContain('legend-item');
+    expect(currentWxss).toContain('.day-cell.settled');
+    expect(currentWxml).toContain("canPrevMonth ? '' : 'disabled'");
+    expect(currentWxml).toContain("canNextMonth ? '' : 'disabled'");
+    expect(currentWxml).not.toContain('未结预计');
+    expect(currentJs).toContain('getCalendarNavigation');
+    expect(currentJs).toContain('settledCheckinDates');
+    expect(currentJs).toContain('goSettlement');
+    expect(currentJs).toContain('wx.navigateTo');
+    expect(settlementWxml).toContain('合同口径');
+    expect(settlementWxml).toContain('本期计算');
+    expect(settlementJs).toContain('wx.chooseMedia');
+    expect(settlementJs).not.toContain('wx.chooseImage');
+    expect(settlementJs).toContain('wx.showModal');
+    expect(settlementJs).toContain('confirmSettlement');
+    expect(historyWxml).toContain('按合同计算');
+    expect(historyWxml).toContain('累计干了');
+    expect(historyJs).toContain('USER_NOT_FOUND');
+  });
+
+  test('keeps the first-run matching flow consistent and in plain language', () => {
+    const read = (page, extension) =>
+      fs.readFileSync(path.join(__dirname, '..', 'miniprogram', `pages/${page}${extension}`), 'utf8');
+    const onboardingWxml = read('onboarding/index', '.wxml');
+    const onboardingWxss = read('onboarding/index', '.wxss');
+    const onboardingJs = read('onboarding/index', '.js');
+    const createWxml = read('employer/create/index', '.wxml');
+    const createWxss = read('employer/create/index', '.wxss');
+    const createJs = read('employer/create/index', '.js');
+    const joinWxml = read('employee/join/index', '.wxml');
+    const joinWxss = read('employee/join/index', '.wxss');
+    const joinJs = read('employee/join/index', '.js');
+    const waitingWxml = read('employer/waiting/index', '.wxml');
+    const waitingWxss = read('employer/waiting/index', '.wxss');
+    const waitingJs = read('employer/waiting/index', '.js');
+    const currentJs = read('current/index', '.js');
+
+    expect(onboardingWxml).toContain('flow-page');
+    expect(onboardingWxml).toContain('我是雇主');
+    expect(onboardingWxml).toContain('我是阿姨');
+    expect(onboardingWxml).not.toContain('flow-kicker');
+    expect(onboardingWxml).not.toContain('flow-title');
+    expect(onboardingWxml).not.toContain('flow-lead');
+    expect(onboardingWxml).not.toContain('role-desc');
+    expect(onboardingWxml).not.toContain('debug');
+    expect(onboardingJs).toContain('restoreExistingFlow');
+    expect(onboardingJs).toContain('allowReselect');
+    expect(currentJs).toContain('routeFromState');
+    expect(currentJs).toContain('USER_NOT_FOUND');
+
+    for (const markup of [createWxml, joinWxml]) {
+      expect(markup).toContain('flow-page');
+      expect(markup).toContain('flow-title');
+      expect(markup).toContain('flow-lead');
+      expect(markup).not.toContain('flow-kicker');
+      expect(markup).not.toContain('邀请码');
+    }
+    expect(createWxml).toContain("'创建合作'");
+    expect(JSON.parse(read('employer/create/index', '.json')).navigationBarTitleText).toBe('创建合作');
+    expect(createWxml).not.toContain('创建合作并生成匹配码');
+    expect(createWxml).not.toContain('coordinate-row');
+    expect(createWxml).not.toContain('placeholder="纬度"');
+    expect(createWxml).not.toContain('placeholder="经度"');
+    expect(createWxml).toContain('保存修改');
+    expect(createWxss).toContain('width: 100%');
+    expect(createWxss).toContain('white-space: nowrap');
+    expect(createJs).toContain('formatShanghaiDateInput');
+    expect(createJs).toContain('updateContract');
+    expect(createJs).toContain('请点击「地图选择位置」');
+    expect(joinWxml).toContain('输入匹配码');
+    expect(JSON.parse(read('employee/join/index', '.json')).navigationBarTitleText).toBe('输入匹配码');
+    expect(joinWxml).toContain('核对合作信息');
+    expect(joinWxml).toContain('确认匹配');
+    expect(joinWxml).toContain('{{previewDailySalaryText}} / 天');
+    expect(waitingWxml).toContain('等待阿姨接受');
+    expect(waitingWxml).not.toContain('中间态');
+    expect(waitingWxml).toContain('重新生成匹配码');
+    expect(waitingWxml).toContain('返回修改');
+    expect(waitingWxml).toContain('去阿姨端输入匹配码');
+    expect(waitingWxml).toContain('重新选择身份');
+    expect(waitingJs).toContain('resetUnmatchedCooperation');
+    expect(waitingJs).toContain('switchMockEmployee');
+    expect(waitingJs).toContain('/pages/onboarding/index?reselect=1');
+    expect(joinWxml).toContain('重新选择身份');
+    expect(joinWxml).toContain('<button');
+    expect(joinWxml).toContain('button-plain restart-button');
+    expect(joinWxss).toContain('min-height: 92rpx');
+    expect(joinWxss).toContain('white-space: nowrap');
+    expect(joinJs).toContain('restartIdentity');
+    expect(joinJs).toContain('formatMoney');
+    expect(joinJs).toContain('/pages/onboarding/index?reselect=1');
+    expect(read('current/index', '.wxml')).toContain('本期已上工');
+    expect(read('current/index', '.wxml')).not.toContain('本期已上工天数');
+
+    for (const stylesheet of [onboardingWxss, createWxss, joinWxss, waitingWxss]) {
+      expect(stylesheet).toContain('flow-page');
+      expect(stylesheet).toContain('padding-top: 32rpx');
+    }
+  });
+
+  test('page modules can resolve their service dependencies', () => {
+    global.Page = (definition) => definition;
+    const pages = [
+      'pages/onboarding/index',
+      'pages/employer/create/index',
+      'pages/employer/waiting/index',
+      'pages/employee/join/index',
+      'pages/current/index',
+      'pages/history/index',
+      'pages/settlement/index'
+    ];
+    for (const page of pages) {
+      expect(() => require(`../miniprogram/${page}`)).not.toThrow();
+    }
+  });
+});

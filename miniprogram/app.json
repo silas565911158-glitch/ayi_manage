@@ -1,0 +1,46 @@
+{
+  "pages": [
+    "pages/current/index",
+    "pages/onboarding/index",
+    "pages/employer/create/index",
+    "pages/employer/waiting/index",
+    "pages/employee/join/index",
+    "pages/history/index",
+    "pages/settlement/index"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#F7F1E8",
+    "navigationBarTitleText": "上户考勤",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#F7F1E8",
+    "backgroundTextStyle": "dark"
+  },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于校验打卡位置是否在家庭围栏内"
+    }
+  },
+  "requiredPrivateInfos": [
+    "chooseLocation",
+    "getLocation"
+  ],
+  "sitemapLocation": "sitemap.json",
+  "style": "v2",
+  "tabBar": {
+    "custom": true,
+    "color": "#756E63",
+    "selectedColor": "#C9402A",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/current/index",
+        "text": "当期"
+      },
+      {
+        "pagePath": "pages/history/index",
+        "text": "历史"
+      }
+    ]
+  }
+}

@@ -1,0 +1,36 @@
+.flow-page.onboarding-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: 32rpx;
+}
+
+.role-list {
+  width: 100%;
+}
+
+.role {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 188rpx;
+  margin: 0 0 26rpx;
+  border: 0;
+  border-radius: 24rpx;
+  background: #C9402A;
+  color: #FFFFFF;
+  font-size: 40rpx;
+  font-weight: 700;
+  line-height: 188rpx;
+  white-space: nowrap;
+}
+
+.role::after {
+  border: 0;
+}
+
+.role-employee {
+  background: #1B7F5C;
+}

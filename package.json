@@ -1,0 +1,17 @@
+{
+  "name": "aunt-attendance-miniprogram",
+  "version": "1.0.0",
+  "private": true,
+  "description": "26-day attendance cycle mini program for household caregivers",
+  "scripts": {
+    "test": "jest --runInBand",
+    "verify": "npm run sync:shared && jest --runInBand",
+    "sync:shared": "node scripts/sync-shared.js"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

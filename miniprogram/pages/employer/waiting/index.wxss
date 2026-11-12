@@ -1,0 +1,64 @@
+.flow-page.waiting-page {
+  padding-top: 32rpx;
+}
+
+.waiting-page .flow-title {
+  margin-top: 0;
+}
+
+.invite-label {
+  color: #756e63;
+  font-size: 30rpx;
+  text-align: center;
+}
+
+.invite-code {
+  margin-top: 6rpx;
+  color: #c9402a;
+  font-size: 72rpx;
+  font-weight: 700;
+  letter-spacing: 10rpx;
+  text-align: center;
+}
+
+.expire {
+  margin: 6rpx 0 24rpx;
+  color: #756e63;
+  font-size: 26rpx;
+  text-align: center;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 30rpx;
+  padding: 9rpx 0;
+  color: #555047;
+  font-size: 30rpx;
+}
+
+.summary-row text:last-child {
+  max-width: 430rpx;
+  color: #22262d;
+  font-weight: 600;
+  text-align: right;
+}
+
+.restart-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  color: #C9402A;
+  font-size: 34rpx;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.employee-button {
+  background: #1B7F5C;
+  box-shadow: none;
+}

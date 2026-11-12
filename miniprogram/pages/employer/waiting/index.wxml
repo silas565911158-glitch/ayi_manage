@@ -1,0 +1,49 @@
+<view class="page flow-page waiting-page">
+  <view wx:if="{{loading}}" class="quiet">正在读取……</view>
+
+  <block wx:elif="{{state}}">
+    <view class="flow-title">{{state.contract.employeeOpenid ? '匹配成功' : '等待阿姨接受'}}</view>
+    <text class="flow-lead">{{state.contract.employeeOpenid ? '双方已建立合作，可以进入当期记工。' : '把匹配码发给阿姨；她确认合作信息后，双方会自动匹配。'}}</text>
+
+    <view class="flow-card">
+      <block wx:if="{{!state.contract.employeeOpenid}}">
+        <view class="invite-label">8 位匹配码</view>
+        <view class="invite-code">{{state.contract.inviteCode || '已过期'}}</view>
+        <view class="expire">有效期至 {{expiresText}}</view>
+      </block>
+
+      <view class="summary-row">
+        <text>合作定价</text>
+        <text>{{state.contract.totalAmount}} 元 / {{state.contract.targetDays}} 天</text>
+      </view>
+      <view class="summary-row">
+        <text>日薪</text>
+        <text>{{pricing.dailySalaryText}}</text>
+      </view>
+      <view class="summary-row">
+        <text>开始日期</text>
+        <text>{{state.contract.startDate}}</text>
+      </view>
+      <view class="summary-row">
+        <text>家庭地址</text>
+        <text>{{state.contract.homeLocation.address}}</text>
+      </view>
+      <view class="summary-row">
+        <text>围栏半径</text>
+        <text>{{state.contract.radiusMeters}} 米</text>
+      </view>
+
+      <block wx:if="{{!state.contract.employeeOpenid}}">
+        <button class="button-primary" hover-class="button-hover" bindtap="copyInvite" disabled="{{!state.contract.inviteCode}}">复制匹配码</button>
+            <button wx:if="{{isMock}}" class="button-primary employee-button" hover-class="button-hover" bindtap="switchMockEmployee" disabled="{{working}}">去阿姨端输入匹配码</button>
+        <button class="button-plain" hover-class="button-hover" bindtap="regenerate" disabled="{{working}}">重新生成匹配码</button>
+        <button class="button-plain" hover-class="button-hover" bindtap="editContract">返回修改</button>
+        <button class="button-plain" hover-class="button-hover" bindtap="refresh">刷新状态</button>
+        <button class="button-plain restart-button" hover-class="button-hover" bindtap="resetIdentity" disabled="{{working}}">重新选择身份</button>
+      </block>
+      <button wx:else class="button-primary" hover-class="button-hover" bindtap="goCurrent">进入当期</button>
+
+      <view class="status-error" wx:if="{{error}}">{{error}}</view>
+    </view>
+  </block>
+</view>

@@ -1,0 +1,72 @@
+.flow-page.join-page {
+  padding-top: 32rpx;
+}
+
+.join-page .flow-title {
+  margin-top: 0;
+}
+
+.code-input {
+  height: 118rpx;
+  border: 3rpx solid #22262d;
+  border-radius: 16rpx;
+  background: #fff;
+  color: #22262d;
+  font-size: 48rpx;
+  font-weight: 700;
+  letter-spacing: 8rpx;
+  text-align: center;
+}
+
+.field-help {
+  display: block;
+  margin-top: 10rpx;
+  color: #756e63;
+  font-size: 26rpx;
+  text-align: center;
+}
+
+.check-title {
+  margin-bottom: 12rpx;
+  color: #22262d;
+  font-size: 34rpx;
+  font-weight: 700;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 30rpx;
+  padding: 9rpx 0;
+  color: #555047;
+  font-size: 30rpx;
+}
+
+.summary-row text:last-child {
+  max-width: 430rpx;
+  color: #22262d;
+  font-weight: 600;
+  text-align: right;
+}
+
+.restart-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 92rpx;
+  margin-top: 18rpx;
+  padding: 0 24rpx;
+  border-radius: 16rpx;
+  color: #4D473E;
+  font-size: 34rpx;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.restart-button::after {
+  border: 0;
+}

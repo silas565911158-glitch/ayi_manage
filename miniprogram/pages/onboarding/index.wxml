@@ -1,0 +1,6 @@
+<view class="page flow-page onboarding-page">
+  <view class="role-list">
+    <button class="role" hover-class="button-hover" data-role="employer" bindtap="chooseRole" disabled="{{submitting}}">我是雇主</button>
+    <button class="role role-employee" hover-class="button-hover" data-role="employee" bindtap="chooseRole" disabled="{{submitting}}">我是阿姨</button>
+  </view>
+</view>

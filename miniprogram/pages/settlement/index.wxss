@@ -1,0 +1,90 @@
+.settlement-page {
+  padding-top: 32rpx;
+  padding-bottom: calc(72rpx + env(safe-area-inset-bottom));
+}
+
+.settle-card {
+  margin-top: 34rpx;
+  padding: 30rpx;
+  border: 2rpx solid #E2D5C2;
+  border-radius: 22rpx;
+  background: #FFFDFA;
+}
+.range-title,
+.mini-label,
+.note {
+  color: #756E63;
+  font-size: 26rpx;
+}
+
+.range { margin-top: 8rpx; color: #22262D; font-size: 40rpx; font-weight: 700; }
+.note { margin-top: 10rpx; }
+.fact-row { display: flex; gap: 80rpx; margin-top: 34rpx; }
+.fact { margin-top: 4rpx; color: #22262D; font-size: 40rpx; font-weight: 700; }
+.calculation-card { margin-top: 26rpx; padding: 24rpx; border-radius: 16rpx; background: #F4EDE1; }
+.calculation-label { color: #756E63; font-size: 26rpx; font-weight: 700; }
+.calculation-label.secondary { margin-top: 20rpx; }
+.calculation-line { margin-top: 8rpx; color: #22262D; font-size: 34rpx; font-weight: 700; line-height: 1.35; }
+.calculation-formula { margin-top: 12rpx; color: #C9402A; font-size: 30rpx; font-weight: 700; }
+.suggest { margin-top: 16rpx; color: #555047; font-size: 30rpx; font-weight: 600; }
+.field { margin-top: 34rpx; }
+.money-input,
+.reason-input {
+  box-sizing: border-box;
+  min-height: 96rpx;
+  margin-top: 10rpx;
+  padding: 20rpx;
+  border: 2rpx solid #D9CBB6;
+  border-radius: 14rpx;
+  background: #FFFFFF;
+  color: #22262D;
+  font-size: 40rpx;
+  font-weight: 700;
+}
+
+.reason-input {
+  font-size: 30rpx;
+  font-weight: 400;
+}
+.images { display: flex; flex-wrap: wrap; gap: 18rpx; margin-top: 16rpx; }
+.image-wrap, .add-image { position: relative; width: 168rpx; height: 168rpx; }
+.image-wrap image { width: 100%; height: 100%; border-radius: 10rpx; background: #EFE7DA; }
+.remove {
+  position: absolute;
+  right: -12rpx;
+  top: -12rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44rpx;
+  height: 44rpx;
+  margin: 0;
+  padding: 0;
+  border-radius: 50%;
+  background: #22262D;
+  color: #FFF;
+  font-size: 26rpx;
+  line-height: 44rpx;
+}
+
+.remove::after {
+  border: 0;
+}
+.add-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 3rpx dashed #A99D89;
+  border-radius: 14rpx;
+  background: #FFFDFA;
+  color: #756E63;
+  font-size: 56rpx;
+  line-height: 1;
+}
+
+.add-image::after {
+  border: 0;
+}

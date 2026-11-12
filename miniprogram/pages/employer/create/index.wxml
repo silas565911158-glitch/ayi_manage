@@ -1,0 +1,50 @@
+<view class="page flow-page create-page">
+  <view class="flow-title">{{editing ? '修改合作' : '创建合作'}}</view>
+  <text class="flow-lead">填写双方约定的人工价格、开始日期和上户地址。</text>
+
+    <view class="flow-card">
+      <view class="form-section">
+        <view class="section-title">价格</view>
+        <view class="row">
+          <view class="field row-item">
+            <label class="field-label">总金额（元）</label>
+            <input class="input" type="digit" value="{{form.totalAmount}}" data-field="totalAmount" bindinput="onInput" placeholder="8000" />
+          </view>
+          <view class="field row-item">
+            <label class="field-label">约定天数</label>
+            <input class="input" type="number" value="{{form.targetDays}}" data-field="targetDays" bindinput="onInput" placeholder="26" />
+          </view>
+        </view>
+        <view class="pricing-box">
+          <view class="pricing-title">{{pricing.dailySalaryText}}</view>
+          <view class="pricing-formula">{{pricing.pricingFormulaText}}</view>
+        </view>
+      </view>
+
+      <view class="form-section">
+        <view class="section-title">时间与地址</view>
+        <view class="field">
+          <label class="field-label">开始日期</label>
+          <picker mode="date" value="{{form.startDate}}" bindchange="onDateChange">
+            <view class="picker-value">{{form.startDate}}</view>
+          </picker>
+        </view>
+        <view class="field">
+          <label class="field-label">家庭地址</label>
+          <input class="input" value="{{form.address}}" data-field="address" bindinput="onInput" placeholder="例如：上海市黄浦区某小区" />
+          <button class="button button-plain location-button" hover-class="button-hover" bindtap="chooseHome">地图选择位置</button>
+          <text class="field-help">地址可先填写，最终以地图选择的位置为准。</text>
+        </view>
+        <view class="field">
+          <label class="field-label">围栏半径：{{form.radiusMeters}} 米</label>
+          <slider min="100" max="1000" step="50" value="{{form.radiusMeters}}" activeColor="#c9402a" block-size="24" bindchange="onRadiusChange" />
+          <text class="field-help">建议 300 米，可覆盖普通小区定位偏差。</text>
+        </view>
+      </view>
+
+      <button class="button-primary" hover-class="button-hover" bindtap="submit" disabled="{{submitting}}">
+        {{submitting ? (editing ? '正在保存…' : '正在创建…') : (editing ? '保存修改' : '创建合作')}}
+      </button>
+      <view class="status-error" wx:if="{{error}}">{{error}}</view>
+    </view>
+</view>
