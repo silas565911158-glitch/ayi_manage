@@ -77,10 +77,11 @@ npm run verify
 
 用微信开发者工具导入项目根目录：
 
-- AppID：小程序测试号 `wx5c9616725cd03d11`。
+- AppID：正式小程序 `wx56fd09f940f30024`。
 - 小程序代码：`miniprogram/`。
 - 云函数：`cloudfunctions/attendance/`。
-- 默认运行模式：本地 Mock。
+- 默认运行模式：云开发。
+- 云环境：`aunt-attendance-prod-d3aa5daba41`。
 
 Mock 模式使用 `mock-employer` 和 `mock-employee` 模拟两个用户。当期页右上角 `⋯` 菜单可切换体验身份或重置本地数据。
 

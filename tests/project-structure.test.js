@@ -23,13 +23,14 @@ describe('project structure', () => {
     }
   });
 
-  test('uses the configured test AppID, mini program root, cloud root, and mock by default', () => {
+  test('uses the production AppID, mini program root, cloud root, and cloud environment', () => {
     const project = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'project.config.json'), 'utf8'));
-    expect(project.appid).toBe('wx5c9616725cd03d11');
+    expect(project.appid).toBe('wx56fd09f940f30024');
     expect(project.miniprogramRoot).toBe('miniprogram/');
     expect(project.cloudfunctionRoot).toBe('cloudfunctions/');
     const runtime = require('../miniprogram/config/runtime');
-    expect(runtime.mode).toBe('mock');
+    expect(runtime.mode).toBe('cloud');
+    expect(runtime.cloudEnv).toBe('aunt-attendance-prod-d3aa5daba41');
     const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
     expect(packageJson.scripts.verify).toContain('sync:shared');
     expect(packageJson.scripts.verify).toContain('jest --runInBand');
