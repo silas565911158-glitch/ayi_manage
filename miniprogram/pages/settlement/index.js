@@ -5,6 +5,7 @@ const {
   buildSettlementExplanation,
   formatCompactDateWithYear
 } = require('../../services/view-state');
+const { addLocalDays } = require('../../services/backfill-state');
 
 Page({
   data: {
@@ -34,7 +35,7 @@ Page({
       const workEnd = checkins.length > 0
         ? checkins[checkins.length - 1].localDate
         : state.today.localDate;
-      const nextStageStart = shiftLocalDate(workEnd, 1);
+      const nextStageStart = addLocalDays(workEnd, 1);
       const calculation = buildSettlementExplanation({
         totalAmount: state.contract.totalAmount,
         targetDays: state.contract.targetDays,
@@ -189,10 +190,4 @@ function uploadCloudProof(tempPath, contractId, index) {
       fail: reject
     });
   });
-}
-
-function shiftLocalDate(localDate, days) {
-  const date = new Date(`${localDate}T00:00:00+08:00`);
-  date.setUTCDate(date.getUTCDate() + days);
-  return date.toISOString().slice(0, 10);
 }

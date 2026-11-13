@@ -31,7 +31,8 @@
       </view>
 
       <button wx:if="{{contract}}" class="contract-toggle" hover-class="button-hover" bindtap="toggleContract">
-        合同信息
+        <view class="contract-toggle-label">合同信息</view>
+        <view class="contract-toggle-chevron {{showContract ? 'expanded' : ''}}">⌄</view>
       </button>
 
       <view wx:if="{{contract && showContract}}" class="contract-detail">
@@ -50,7 +51,7 @@
           </view>
           <view class="info-item">
             <view class="info-label">合作状态</view>
-            <view class="info-value">{{contract.status === 'active' ? '合作中' : '已结束'}}</view>
+            <view class="info-value"><text class="status-pill">{{contract.status === 'active' ? '合作中' : '已结束'}}</text></view>
           </view>
           <view class="info-item wide">
             <view class="info-label">家庭地址</view>

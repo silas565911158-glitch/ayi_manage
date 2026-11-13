@@ -1,11 +1,12 @@
 <view class="page flow-page backfill-page">
   <view wx:if="{{loading}}" class="quiet">正在读取……</view>
 
-  <block wx:else>
+  <view wx:else class="backfill-shell">
+    <scroll-view scroll-y class="backfill-scroll">
     <view class="flow-title">补录</view>
     <view class="flow-lead">只能补当前期内、最近30天且尚未打卡的日期；今天不能补录。</view>
 
-    <view class="flow-card">
+    <view class="backfill-card">
       <view class="scope-row">
         <view>
           <view class="scope-label">可补范围</view>
@@ -36,7 +37,7 @@
       </view>
     </view>
 
-    <view class="flow-card">
+    <view class="backfill-card">
       <view class="config-row">
         <picker mode="time" value="{{workTime}}" bindchange="changeTime">
           <view class="time-box">
@@ -69,9 +70,21 @@
       />
     </view>
 
-    <button class="button-primary" disabled="{{submitting || selectedCount < 1}}" bindtap="submit">
-      {{submitting ? '正在补录…' : '补录'}}
-    </button>
     <view wx:if="{{error}}" class="status-error">{{error}}</view>
-  </block>
+    </scroll-view>
+
+    <view class="backfill-footer">
+      <view class="backfill-total">
+        <view class="backfill-total-copy">
+          <view class="backfill-total-days">将补 {{selectedCount}} 天</view>
+          <view class="backfill-total-detail">统一 {{workTime}} · {{reason === '其他' ? (otherReason || '其他') : reason}}</view>
+        </view>
+        <view
+          class="backfill-confirm {{submitting || selectedCount < 1 ? 'disabled' : ''}}"
+          hover-class="{{submitting || selectedCount < 1 ? 'none' : 'button-hover'}}"
+          bindtap="submit"
+        >{{submitting ? '正在补录…' : '补录'}}</view>
+      </view>
+    </view>
+  </view>
 </view>

@@ -7,12 +7,18 @@
         <view class="section-title">价格</view>
         <view class="row">
           <view class="field row-item">
-            <label class="field-label">总金额（元）</label>
-            <input class="input" type="digit" value="{{form.totalAmount}}" data-field="totalAmount" bindinput="onInput" placeholder="8000" />
+            <label class="field-label">总金额</label>
+            <view class="input-shell">
+              <input class="input inline-input" type="digit" value="{{form.totalAmount}}" data-field="totalAmount" bindinput="onInput" placeholder="8000" />
+              <text class="input-unit">元</text>
+            </view>
           </view>
           <view class="field row-item">
             <label class="field-label">约定天数</label>
-            <input class="input" type="number" value="{{form.targetDays}}" data-field="targetDays" bindinput="onInput" placeholder="26" />
+            <view class="input-shell">
+              <input class="input inline-input" type="number" value="{{form.targetDays}}" data-field="targetDays" bindinput="onInput" placeholder="26" />
+              <text class="input-unit">天</text>
+            </view>
           </view>
         </view>
         <view class="pricing-box">
@@ -26,7 +32,7 @@
         <view class="field">
           <label class="field-label">开始日期</label>
           <picker mode="date" value="{{form.startDate}}" bindchange="onDateChange">
-            <view class="picker-value">{{form.startDate}}</view>
+            <view class="picker-value">{{startDisplayText}}</view>
           </picker>
         </view>
         <view class="field">
@@ -36,8 +42,15 @@
           <text class="field-help">地址可先填写，最终以地图选择的位置为准。</text>
         </view>
         <view class="field">
-          <label class="field-label">围栏半径：{{form.radiusMeters}} 米</label>
-          <slider min="100" max="1000" step="50" value="{{form.radiusMeters}}" activeColor="#c9402a" block-size="24" bindchange="onRadiusChange" />
+          <label class="field-label">围栏半径</label>
+          <view class="slider-shell">
+            <view class="slider-top">
+              <text>100 米</text>
+              <text>{{form.radiusMeters}} 米</text>
+              <text>1000 米</text>
+            </view>
+            <slider min="100" max="1000" step="50" value="{{form.radiusMeters}}" activeColor="#c9402a" block-size="24" bindchange="onRadiusChange" />
+          </view>
           <text class="field-help">建议 300 米，可覆盖普通小区定位偏差。</text>
         </view>
       </view>

@@ -90,11 +90,20 @@ function buildCheckinMap(records) {
     if (!value || !value.localDate) return;
     map.set(value.localDate, {
       localDate: value.localDate,
-      time: value.time || value.workTime || '',
+      time: compactShanghaiTime(value.time || value.workTime),
       source: value.source || ''
     });
   });
   return map;
+}
+
+function compactShanghaiTime(value) {
+  const text = String(value || '');
+  if (/^([01]\d|2[0-3]):[0-5]\d$/.test(text)) return text;
+  const date = new Date(text);
+  if (Number.isNaN(date.getTime())) return '';
+  const shanghaiDate = new Date(date.getTime() + 8 * 60 * 60 * 1000);
+  return `${String(shanghaiDate.getUTCHours()).padStart(2, '0')}:${String(shanghaiDate.getUTCMinutes()).padStart(2, '0')}`;
 }
 
 function monthIndex(localDate) {

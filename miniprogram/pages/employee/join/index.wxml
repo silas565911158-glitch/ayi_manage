@@ -26,5 +26,6 @@
     <button class="button-primary" hover-class="button-hover" bindtap="confirmJoin" disabled="{{submitting}}">
       {{submitting ? '正在匹配…' : '确认匹配'}}
     </button>
+    <view class="flow-note">确认后从开始日期记工；开始日期未到时，首页会明确提示暂不用打卡。</view>
   </view>
 </view>

@@ -17,10 +17,12 @@
 
     <view class="flow-card">
       <view class="section-title">当前状态</view>
-      <view class="summary-row"><text>当前期数</text><text>第 {{state.currentStage.stageIndex}} 期</text></view>
-      <view class="summary-row"><text>本期已上工</text><text>{{state.currentStage.days}} 天</text></view>
-      <view class="summary-row"><text>历史已结算</text><text>{{state.settlementSummary.settledStages}} 期</text></view>
-      <view class="summary-row"><text>累计支付</text><text>{{totalPaidText}}</text></view>
+      <view class="termination-summary">
+        <view class="summary-row"><text>当前期数</text><text>第 {{state.currentStage.stageIndex}} 期</text></view>
+        <view class="summary-row"><text>本期已上工</text><text>{{state.currentStage.days}} 天</text></view>
+        <view class="summary-row"><text>历史已结算</text><text>{{state.settlementSummary.settledStages}} 期</text></view>
+        <view class="summary-row"><text>累计支付</text><text>{{totalPaidText}}</text></view>
+      </view>
     </view>
 
     <view class="flow-card">

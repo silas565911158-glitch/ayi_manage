@@ -110,7 +110,7 @@ function publicCheckin(checkin) {
     localDate: checkin.localDate,
     serverTime: checkin.serverTime,
     source: checkin.source || 'employee_checkin',
-    workTime: checkin.workTime || checkin.serverTime,
+    workTime: shanghaiClockTime(checkin.workTime || checkin.serverTime),
     reason: checkin.reason || checkin.backfillReason || null
   };
 }
@@ -118,7 +118,7 @@ function publicCheckin(checkin) {
 function publicCalendarCheckin(checkin) {
   return {
     localDate: checkin.localDate,
-    time: checkin.workTime || checkin.serverTime,
+    time: shanghaiClockTime(checkin.workTime || checkin.serverTime),
     source: checkin.source || 'employee_checkin'
   };
 }
@@ -959,6 +959,7 @@ function addLocalDays(localDate, days) {
 }
 
 function shanghaiClockTime(value) {
+  if (/^([01]\d|2[0-3]):[0-5]\d$/.test(String(value))) return String(value);
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
   const shanghaiDate = new Date(date.getTime() + 8 * 60 * 60 * 1000);

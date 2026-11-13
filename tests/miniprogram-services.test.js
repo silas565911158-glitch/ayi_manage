@@ -154,6 +154,24 @@ describe('mini program services', () => {
     });
   });
 
+  test('formats legacy ISO check-in times as compact Shanghai arrival times', () => {
+    const { buildCalendarMonth } = require('../miniprogram/services/calendar-state');
+    const month = buildCalendarMonth({
+      year: 2026,
+      month: 11,
+      startLocalDate: '2026-11-13',
+      today: '2026-11-13',
+      checkinRecords: [
+        { localDate: '2026-11-13', time: '2026-11-13T04:34:40.036Z' }
+      ]
+    });
+    const days = month.weeks.flat();
+    expect(days.find((day) => day.date === '2026-11-13')).toMatchObject({
+      checkedIn: true,
+      timeText: '12:34'
+    });
+  });
+
   test('builds calendar navigation boundaries for a stage that crosses months', () => {
     const { getCalendarNavigation } = require('../miniprogram/services/calendar-state');
     expect(getCalendarNavigation({
@@ -178,9 +196,11 @@ describe('mini program services', () => {
 
   test('builds a batch backfill board and supports range selection', () => {
     const {
+      addLocalDays,
       buildBackfillBoard,
       selectBackfillDate
     } = require('../miniprogram/services/backfill-state');
+    expect(addLocalDays('2026-11-13', 1)).toBe('2026-11-14');
     const board = buildBackfillBoard({
       earliestLocalDate: '2026-11-01',
       latestLocalDate: '2026-11-12',

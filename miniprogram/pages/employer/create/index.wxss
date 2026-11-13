@@ -19,23 +19,87 @@
   font-weight: 700;
 }
 
+.create-page .row {
+  align-items: end;
+}
+
+.create-page .field-label {
+  min-height: 36rpx;
+  white-space: nowrap;
+}
+
+.input-shell {
+  display: flex;
+  align-items: center;
+  min-height: 88rpx;
+  padding: 18rpx 22rpx;
+  border: 2rpx solid #D9CBB6;
+  border-radius: 22rpx;
+  background: #FFFFFF;
+  box-sizing: border-box;
+}
+
+.inline-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 48rpx;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: 32rpx;
+  font-weight: 700;
+  line-height: 48rpx;
+}
+
+.input-unit {
+  flex: 0 0 auto;
+  margin-left: 6rpx;
+  color: #6B6459;
+  font-size: 24rpx;
+  font-weight: 600;
+  line-height: 30rpx;
+}
+
+.slider-shell {
+  margin-top: 16rpx;
+  padding: 22rpx 24rpx;
+  border: 2rpx solid #D9CBB6;
+  border-radius: 22rpx;
+  background: #FFFFFF;
+  box-sizing: border-box;
+}
+
+.slider-top {
+  display: flex;
+  justify-content: space-between;
+  color: #555047;
+  font-size: 24rpx;
+  font-weight: 700;
+  line-height: 34rpx;
+}
+
+.slider-shell slider {
+  margin: 20rpx 0 0;
+}
+
 .pricing-box {
   margin-top: 20rpx;
-  padding: 24rpx;
-  border-radius: 16rpx;
+  padding: 26rpx;
+  border-radius: 24rpx;
   background: #22262d;
   color: #fff;
 }
 
 .pricing-title {
-  font-size: 40rpx;
+  font-size: 42rpx;
   font-weight: 700;
 }
 
 .pricing-formula {
   margin-top: 4rpx;
   color: #d8d1c3;
-  font-size: 30rpx;
+  font-size: 24rpx;
 }
 
 .location-button {

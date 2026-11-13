@@ -8,8 +8,8 @@
 
 .code-input {
   height: 118rpx;
-  border: 3rpx solid #22262d;
-  border-radius: 16rpx;
+  border: 4rpx solid #22262D;
+  border-radius: 26rpx;
   background: #fff;
   color: #22262d;
   font-size: 48rpx;
@@ -69,4 +69,14 @@
 
 .restart-button::after {
   border: 0;
+}
+
+.flow-note {
+  margin-top: 22rpx;
+  padding: 20rpx 22rpx;
+  border-radius: 20rpx;
+  background: #E4F3ED;
+  color: #146247;
+  font-size: 24rpx;
+  line-height: 34rpx;
 }

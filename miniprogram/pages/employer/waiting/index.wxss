@@ -62,3 +62,13 @@
   background: #1B7F5C;
   box-shadow: none;
 }
+
+.auto-refresh-note {
+  margin-top: 22rpx;
+  padding: 20rpx 22rpx;
+  border-radius: 20rpx;
+  background: #E4F3ED;
+  color: #146247;
+  font-size: 24rpx;
+  line-height: 34rpx;
+}

@@ -40,6 +40,7 @@
         <button class="button-plain" hover-class="button-hover" bindtap="editContract">返回修改</button>
         <button class="button-plain" hover-class="button-hover" bindtap="refresh">刷新状态</button>
         <button class="button-plain restart-button" hover-class="button-hover" bindtap="resetIdentity" disabled="{{working}}">重新选择身份</button>
+        <view class="auto-refresh-note">页面每 5 秒自动检查匹配状态；重新生成或修改后，旧匹配码立即失效。</view>
       </block>
       <button wx:else class="button-primary" hover-class="button-hover" bindtap="goCurrent">进入当期</button>
 

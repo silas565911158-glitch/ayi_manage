@@ -86,7 +86,7 @@ describe('project structure', () => {
     const families = styles.flatMap((style) => style.match(/font-family:\s*([^;]+);/g) || []);
     const sizes = styles.flatMap((style) => style.match(/font-size:\s*(\d+)rpx/g) || [])
       .map((item) => item.match(/(\d+)rpx$/)[1]);
-    expect(new Set(sizes)).toEqual(new Set(['26', '30', '34', '40', '48', '56', '72']));
+    expect(new Set(sizes)).toEqual(new Set(['24', '26', '28', '30', '32', '34', '38', '40', '42', '44', '48', '50', '68', '72']));
     expect(new Set(weights)).toEqual(new Set(['400', '600', '700']));
     expect(families).toHaveLength(1);
     expect(families[0]).toContain('-apple-system');
@@ -120,8 +120,10 @@ describe('project structure', () => {
     const currentJson = JSON.parse(read('pages/current/index', '.json'));
     const settlementWxml = read('pages/settlement/index', '.wxml');
     const settlementJs = read('pages/settlement/index', '.js');
+    const settlementWxss = read('pages/settlement/index', '.wxss');
     const historyWxml = read('pages/history/index', '.wxml');
     const historyJs = read('pages/history/index', '.js');
+    const historyWxss = read('pages/history/index', '.wxss');
 
     expect(currentWxml).toContain('stage-summary-card');
     expect(currentWxml).toContain('stage-leading');
@@ -131,7 +133,7 @@ describe('project structure', () => {
     expect(currentWxml).toContain('today-status');
     expect(currentWxml).toContain('checkin-face');
     expect(currentWxml).toContain('checkin-done');
-    expect(currentWxml).toContain('{{todayClockText}}打卡');
+    expect(currentWxml).toContain('{{todayClockText}} 打卡');
     expect(currentWxml).not.toContain('打卡时间');
     expect(currentWxml).toContain('今日未打卡');
     expect(currentWxml.indexOf('wx:if="{{state.today.checkedIn}}"'))
@@ -160,7 +162,7 @@ describe('project structure', () => {
     expect(currentWxml).toContain('bindtap="goSettlement"');
     expect(currentWxml).not.toContain('flat-action-button');
     expect(currentWxml).toContain('{{totalPaidCompactText}}');
-    expect(currentWxml).toContain('累计支付{{state.settlementSummary.settledStages}}期');
+    expect(currentWxml).toContain('累计支付 {{state.settlementSummary.settledStages}} 期');
     expect(currentWxml).toContain('cumulativeWorkText');
     expect(currentWxml).not.toContain('quick-links');
     expect(currentWxml).toContain('auxiliary-panel');
@@ -187,10 +189,11 @@ describe('project structure', () => {
       currentWxss.indexOf('white-space: nowrap', currentWxss.indexOf('.bottom-checkin-button'))
     );
     expect(currentWxss).toContain('align-items: stretch');
-    expect(currentWxss).toContain('height: 156rpx');
+    expect(currentWxss).toContain('height: 164rpx');
     expect(currentWxss).toContain('height: 84rpx');
-    expect(currentWxss).toContain('height: 64rpx');
+    expect(currentWxss).toContain('height: 58rpx');
     expect(currentWxss).toContain('width: 88rpx');
+    expect(currentWxss).toContain('.metric-value.amount');
     expect(currentWxss).toContain('height: 88rpx');
     expect(currentWxss).toContain('min-height: 104rpx');
     expect(currentWxss).toContain('.bottom-settlement-button');
@@ -207,6 +210,11 @@ describe('project structure', () => {
     expect(currentWxss).not.toContain('min-height: 620rpx');
     expect(currentWxml).toContain('day-dot');
     expect(currentWxml).toContain('day-time');
+    expect(currentWxss).toContain('padding-top: 2rpx');
+    expect(currentWxss).toContain('width: 62rpx');
+    expect(currentWxss).toContain('height: 62rpx');
+    expect(currentWxss).toContain('top: 4rpx');
+    expect(currentWxss).toContain('right: 10rpx');
     expect(currentWxml).toContain("day.settled ? 'settled' : ''");
     expect(currentWxml).toContain("day.withinStage ? '' : 'outside'");
     expect(currentWxml).not.toContain('legend-item');
@@ -224,6 +232,10 @@ describe('project structure', () => {
     expect(settlementJs).not.toContain('wx.chooseImage');
     expect(settlementJs).toContain('wx.showModal');
     expect(settlementJs).toContain('confirmSettlement');
+    expect(settlementWxss).toContain('padding: 30rpx');
+    expect(settlementWxss).toContain('border-radius: 32rpx');
+    expect(settlementWxss).toContain('.fact-row > view');
+    expect(settlementWxss).toContain('width: 156rpx');
     expect(historyWxml).toContain('合同信息');
     expect(historyWxml).toContain('平均到岗');
     expect(historyWxml).toContain('contract-tabs');
@@ -231,6 +243,11 @@ describe('project structure', () => {
     expect(historyJs).toContain('USER_NOT_FOUND');
     expect(historyWxml).toContain('结算工资');
     expect(historyWxml).toContain('bindtap="toggleContract"');
+    expect(historyWxss).toContain('height: 88rpx');
+    expect(historyWxss).toContain('.contract-toggle-chevron');
+    expect(historyWxss).toContain('.status-pill');
+    expect(historyWxss).toContain('border-radius: 32rpx');
+    expect(historyWxss).toContain('width: 94rpx');
   });
 
   test('provides employer backfill and termination safety flows', () => {
@@ -238,8 +255,10 @@ describe('project structure', () => {
       fs.readFileSync(path.join(__dirname, '..', 'miniprogram', `pages/${page}${extension}`), 'utf8');
     const backfillWxml = read('backfill/index', '.wxml');
     const backfillJs = read('backfill/index', '.js');
+    const backfillWxss = read('backfill/index', '.wxss');
     const terminationWxml = read('termination/index', '.wxml');
     const terminationJs = read('termination/index', '.js');
+    const terminationWxss = read('termination/index', '.wxss');
 
     expect(backfillWxml).toContain('最近30天');
     expect(backfillWxml).toContain('连续日期');
@@ -248,6 +267,12 @@ describe('project structure', () => {
     expect(backfillWxml).toContain('bindtap="selectDay"');
     expect(backfillJs).toContain('createBackfillCheckins');
     expect(backfillJs).toContain("workTime: '09:00'");
+    expect(backfillWxml).toContain('backfill-footer');
+    expect(backfillWxml).toContain('将补 {{selectedCount}} 天');
+    expect(backfillWxss).toContain('height: 144rpx');
+    expect(backfillWxss).toContain('width: 308rpx');
+    expect(backfillWxss).toContain('min-height: 88rpx');
+    expect(backfillWxss).toContain('padding: 28rpx');
 
     expect(terminationWxml).toContain('终止后将发生什么');
     expect(terminationWxml).toContain('当前状态');
@@ -255,6 +280,9 @@ describe('project structure', () => {
     expect(terminationWxml).toContain('确认终止合同');
     expect(terminationJs).toContain('terminateContract');
     expect(terminationJs).toContain('这一期还有未结算天数');
+    expect(terminationWxss).toContain('.termination-summary');
+    expect(terminationWxss).toContain('min-height: 104rpx');
+    expect(terminationWxss).toContain('border-radius: 26rpx');
   });
 
   test('keeps the first-run matching flow consistent and in plain language', () => {
@@ -301,8 +329,16 @@ describe('project structure', () => {
     expect(createWxml).not.toContain('placeholder="纬度"');
     expect(createWxml).not.toContain('placeholder="经度"');
     expect(createWxml).toContain('保存修改');
+    expect(createWxml).toContain('>总金额</label>');
+    expect(createWxml).toContain('input-shell');
+    expect(createWxml).toContain('input-unit');
+    expect(createWxml).toContain('{{startDisplayText}}');
+    expect(createWxml).toContain('slider-shell');
     expect(createWxss).toContain('width: 100%');
     expect(createWxss).toContain('white-space: nowrap');
+    expect(createWxss).toContain('align-items: end');
+    expect(createWxss).toContain('.input-shell');
+    expect(createWxss).toContain('.slider-shell');
     expect(createJs).toContain('formatShanghaiDateInput');
     expect(createJs).toContain('updateContract');
     expect(createJs).toContain('请点击「地图选择位置」');
@@ -323,11 +359,15 @@ describe('project structure', () => {
     expect(waitingJs).toContain('stopPolling');
     expect(waitingJs).toContain('5000');
     expect(waitingJs).toContain('/pages/onboarding/index?reselect=1');
+    expect(waitingWxml).toContain('每 5 秒自动检查匹配状态');
+    expect(waitingWxss).toContain('.auto-refresh-note');
     expect(joinWxml).toContain('重新选择身份');
     expect(joinWxml).toContain('<button');
     expect(joinWxml).toContain('button-plain restart-button');
     expect(joinWxss).toContain('min-height: 92rpx');
     expect(joinWxss).toContain('white-space: nowrap');
+    expect(joinWxss).toContain('border-radius: 26rpx');
+    expect(joinWxss).toContain('.flow-note');
     expect(joinJs).toContain('restartIdentity');
     expect(joinJs).toContain('formatMoney');
     expect(joinJs).toContain('/pages/onboarding/index?reselect=1');

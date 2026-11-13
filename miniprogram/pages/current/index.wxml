@@ -17,12 +17,13 @@
   <block wx:else>
     <view class="stage-summary-card">
       <view class="stage-card-top">
-        <view class="stage-leading"></view>
+        <view wx:if="{{isMock}}" class="stage-leading"></view>
         <view class="stage-context">
-          <view class="stage-context-main">第 {{state.currentStage.stageIndex}} 期 · {{stageStartText}}开始</view>
+          <view class="stage-context-main">第 {{state.currentStage.stageIndex}} 期 · {{stageStartText}} 开始</view>
           <view class="stage-context-sub">{{cumulativeWorkText}}</view>
         </view>
         <view
+          wx:if="{{isMock}}"
           class="auxiliary-trigger"
           hover-class="button-hover"
           aria-role="button"
@@ -48,7 +49,7 @@
               <text class="checkin-face">😊</text>
             </view>
             <view class="checkin-copy">
-              <text class="checkin-time">{{todayClockText}}打卡</text>
+              <text class="checkin-time">{{todayClockText}} 打卡</text>
             </view>
           </view>
           <view wx:else class="checkin-locked">
@@ -63,9 +64,9 @@
 
         <view wx:else class="metric today-status">
           <view class="metric-value-row">
-            <text class="metric-value">{{totalPaidCompactText}}</text>
+            <text class="metric-value amount">{{totalPaidCompactText}}</text>
           </view>
-          <view class="metric-label">累计支付{{state.settlementSummary.settledStages}}期</view>
+          <view class="metric-label">累计支付 {{state.settlementSummary.settledStages}} 期</view>
         </view>
       </view>
 

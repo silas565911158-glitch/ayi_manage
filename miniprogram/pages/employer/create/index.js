@@ -3,6 +3,7 @@
 const { api } = require('../../../services/api');
 const {
   buildContractPricingViewModel,
+  formatCompactDateWithYear,
   formatShanghaiDateInput
 } = require('../../../services/view-state');
 
@@ -22,6 +23,7 @@ Page({
   data: {
     editing: false,
     form: defaultForm(),
+    startDisplayText: formatCompactDateWithYear(defaultForm().startDate),
     submitting: false,
     error: '',
     pricing: buildContractPricingViewModel(defaultForm())
@@ -55,7 +57,11 @@ Page({
         longitude: String(contract.homeLocation.longitude),
         radiusMeters: contract.radiusMeters
       };
-      this.setData({ form, pricing: buildContractPricingViewModel(form) });
+      this.setData({
+        form,
+        startDisplayText: formatCompactDateWithYear(form.startDate),
+        pricing: buildContractPricingViewModel(form)
+      });
     }).catch((error) => {
       this.setData({ error: error.message || '读取合作失败' });
     });
@@ -72,7 +78,11 @@ Page({
   },
 
   onDateChange(event) {
-    this.setData({ 'form.startDate': event.detail.value, error: '' });
+    this.setData({
+      'form.startDate': event.detail.value,
+      startDisplayText: formatCompactDateWithYear(event.detail.value),
+      error: ''
+    });
   },
 
   onRadiusChange(event) {
