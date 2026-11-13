@@ -13,7 +13,9 @@ describe('project structure', () => {
       'pages/history/index',
       'pages/settlement/index',
       'pages/backfill/index',
-      'pages/termination/index'
+      'pages/termination/index',
+      'pages/settlement-status/index',
+      'pages/cooperation-ended/index'
     ];
     expect(app.pages).toEqual(expectedPages);
     expect(app.pages[0]).toBe('pages/current/index');
@@ -121,6 +123,8 @@ describe('project structure', () => {
     const settlementWxml = read('pages/settlement/index', '.wxml');
     const settlementJs = read('pages/settlement/index', '.js');
     const settlementWxss = read('pages/settlement/index', '.wxss');
+    const settlementStatusWxml = read('pages/settlement-status/index', '.wxml');
+    const settlementStatusJs = read('pages/settlement-status/index', '.js');
     const historyWxml = read('pages/history/index', '.wxml');
     const historyJs = read('pages/history/index', '.js');
     const historyWxss = read('pages/history/index', '.wxss');
@@ -147,7 +151,6 @@ describe('project structure', () => {
     expect(currentWxml).toContain("bindtap=\"goBackfill\"");
     expect(currentWxml).toContain("bindtap=\"goTermination\"");
     expect(currentWxml).toContain('bottom-settlement-button');
-    expect(currentWxml).toContain('bindtap="confirmSettlement"');
     expect(currentWxml).toContain('bottomCheckinText');
     expect(currentWxml).toContain('bottomCheckinDisabled');
     expect(currentWxml).toContain('face-row');
@@ -177,6 +180,9 @@ describe('project structure', () => {
     expect(currentJs).toContain('formatCompactDateWithYear');
     expect(currentJs).toContain('未开始');
     expect(currentWxml).not.toContain('checkinButtonText');
+    expect(currentWxml).not.toContain('pending-card');
+    expect(currentWxml).not.toContain('等待阿姨确认收款');
+    expect(currentWxml).not.toContain('雇主已结算，请确认');
     expect(currentJs).not.toContain('checkinButtonText');
     expect(currentWxss).toContain('flex: 0 0 auto');
     expect(currentWxss).toContain('padding-bottom: 20rpx');
@@ -236,6 +242,13 @@ describe('project structure', () => {
     expect(settlementWxss).toContain('border-radius: 32rpx');
     expect(settlementWxss).toContain('.fact-row > view');
     expect(settlementWxss).toContain('width: 156rpx');
+    expect(settlementJs).toContain('/pages/settlement-status/index');
+    expect(settlementStatusWxml).toContain('bindtap="confirmSettlement"');
+    expect(settlementStatusWxml).toContain('bindtap="disputeSettlement"');
+    expect(settlementStatusWxml).toContain('bindtap="cancelSettlement"');
+    expect(settlementStatusJs).toContain('confirmSettlementRequest');
+    expect(settlementWxss).not.toContain('right: -12rpx');
+    expect(settlementWxss).not.toContain('top: -12rpx');
     expect(historyWxml).toContain('合同信息');
     expect(historyWxml).toContain('平均到岗');
     expect(historyWxml).toContain('contract-tabs');
@@ -246,6 +259,9 @@ describe('project structure', () => {
     expect(historyWxss).toContain('height: 88rpx');
     expect(historyWxss).toContain('.contract-toggle-chevron');
     expect(historyWxss).toContain('.status-pill');
+    expect(historyWxml).toContain('class="info-row"');
+    expect(historyWxml).toContain('{{dailySalaryText}} / 天');
+    expect(historyWxss).not.toContain('.info-grid');
     expect(historyWxss).toContain('border-radius: 32rpx');
     expect(historyWxss).toContain('width: 94rpx');
   });
@@ -283,6 +299,24 @@ describe('project structure', () => {
     expect(terminationWxss).toContain('.termination-summary');
     expect(terminationWxss).toContain('min-height: 104rpx');
     expect(terminationWxss).toContain('border-radius: 26rpx');
+  });
+
+  test('keeps lifecycle states on dedicated pages and makes identity reselection explicit', () => {
+    const read = (page, extension) =>
+      fs.readFileSync(path.join(__dirname, '..', 'miniprogram', `pages/${page}${extension}`), 'utf8');
+    const currentJs = read('current/index', '.js');
+    const onboardingJs = read('onboarding/index', '.js');
+    const terminationJs = read('termination/index', '.js');
+    const endedWxml = read('cooperation-ended/index', '.wxml');
+    const endedJs = read('cooperation-ended/index', '.js');
+
+    expect(currentJs).toContain("url = '/pages/settlement-status/index'");
+    expect(currentJs).toContain("url = '/pages/onboarding/index?reselect=1'");
+    expect(onboardingJs).toContain('result.data.lastCooperation');
+    expect(onboardingJs).toContain('this.allowReselect = options.reselect ===');
+    expect(terminationJs).toContain('/pages/cooperation-ended/index');
+    expect(endedWxml).toContain('重新选择身份');
+    expect(endedJs).toContain('/pages/onboarding/index?reselect=1');
   });
 
   test('keeps the first-run matching flow consistent and in plain language', () => {
@@ -391,7 +425,9 @@ describe('project structure', () => {
       'pages/history/index',
       'pages/settlement/index',
       'pages/backfill/index',
-      'pages/termination/index'
+      'pages/termination/index',
+      'pages/settlement-status/index',
+      'pages/cooperation-ended/index'
     ];
     for (const page of pages) {
       expect(() => require(`../miniprogram/${page}`)).not.toThrow();

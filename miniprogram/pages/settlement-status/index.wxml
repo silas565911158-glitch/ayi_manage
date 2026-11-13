@@ -1,0 +1,38 @@
+<view class="page flow-page status-page">
+  <view wx:if="{{loading}}" class="quiet">正在读取……</view>
+
+  <block wx:else>
+    <view class="flow-title">{{title}}</view>
+    <view class="flow-lead">请核对这一期的天数、计算口径和转账截图。</view>
+
+    <view class="status-card">
+      <view class="days">这一期干了 {{state.pendingSettlement.days}} 天</view>
+      <view class="range">{{state.pendingSettlement.stageStartLocalDate}} 至 {{state.pendingSettlement.workEndLocalDate}}</view>
+      <view class="formula">{{explanation.formulaText}} = {{explanation.suggestedText}}</view>
+      <view class="contract">{{explanation.contractText}} = {{explanation.dailySalaryText}}</view>
+      <view class="paid">实付 {{paidText}}</view>
+      <view wx:if="{{explanation.differenceText}}" class="difference">{{explanation.differenceText}}</view>
+      <view wx:if="{{state.pendingSettlement.differenceReason}}" class="reason">原因：{{state.pendingSettlement.differenceReason}}</view>
+      <view wx:if="{{state.pendingSettlement.transferProofs.length}}" class="proofs">
+        <image
+          wx:for="{{state.pendingSettlement.transferProofs}}"
+          wx:key="fileId"
+          src="{{item.temporaryUrl || item.fileId}}"
+          mode="aspectFill"
+          data-index="{{index}}"
+          bindtap="previewProof"
+        />
+      </view>
+    </view>
+
+    <view wx:if="{{role === 'employee' && state.pendingSettlement.status === 'pending_employee'}}" class="actions">
+      <button class="button-danger" disabled="{{working}}" bindtap="disputeSettlement">金额不对</button>
+      <button class="button-primary" disabled="{{working}}" bindtap="confirmSettlement">确认收款</button>
+    </view>
+    <view wx:elif="{{role === 'employer'}}" class="single-action">
+      <button class="button-plain" disabled="{{working}}" bindtap="cancelSettlement">取消本次结算</button>
+    </view>
+
+    <view wx:if="{{error}}" class="status-error">{{error}}</view>
+  </block>
+</view>

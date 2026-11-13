@@ -13,6 +13,7 @@ Page({
     contractTabs: [],
     selectedContractId: '',
     contract: null,
+    dailySalaryText: formatMoney(0),
     showContract: false,
     summary: { settledStages: 0, totalPaidAmount: 0, totalSettledDays: 0 },
     totalPaidText: formatMoney(0),
@@ -80,6 +81,9 @@ Page({
         ...contractGroup.contract,
         startText: formatCompactDateWithYear(contractGroup.contract.startDate)
       },
+      dailySalaryText: formatMoney(
+        Number(contractGroup.contract.totalAmount) / Number(contractGroup.contract.targetDays)
+      ),
       summary: contractGroup.summary,
       totalPaidText: formatMoney(contractGroup.summary.totalPaidAmount),
       totalSettledDaysText: String(contractGroup.summary.totalSettledDays || 0),

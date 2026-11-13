@@ -8,7 +8,9 @@
     "pages/history/index",
     "pages/settlement/index",
     "pages/backfill/index",
-    "pages/termination/index"
+    "pages/termination/index",
+    "pages/settlement-status/index",
+    "pages/cooperation-ended/index"
   ],
   "window": {
     "navigationBarBackgroundColor": "#F7F1E8",

@@ -76,7 +76,7 @@ Page({
         api.call('terminateContract', { reason }).then((result) => {
           if (!result.ok) throw new Error(result.message);
           wx.showToast({ title: '已终止', icon: 'success' });
-          setTimeout(() => wx.reLaunch({ url: '/pages/employer/create/index' }), 500);
+          setTimeout(() => wx.reLaunch({ url: '/pages/cooperation-ended/index' }), 500);
         }).catch((error) => {
           this.setData({ submitting: false, error: error.message || '终止失败' });
         });

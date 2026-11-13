@@ -141,8 +141,8 @@
 
 .remove {
   position: absolute;
-  right: -12rpx;
-  top: -12rpx;
+  right: 8rpx;
+  top: 8rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -153,6 +153,7 @@
   border-radius: 50%;
   background: #22262D;
   color: #FFFFFF;
+  box-shadow: 0 0 0 4rpx #FFFDFA;
   font-size: 24rpx;
   line-height: 40rpx;
 }

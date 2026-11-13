@@ -139,7 +139,7 @@ Page({
     })).then((result) => {
       if (!result.ok) throw new Error(result.message);
       wx.showToast({ title: '已发给阿姨', icon: 'success' });
-      setTimeout(() => wx.switchTab({ url: '/pages/current/index' }), 400);
+      setTimeout(() => wx.reLaunch({ url: '/pages/settlement-status/index' }), 400);
     }).catch((error) => {
       this.setData({ submitting: false, error: error.message || '发起失败' });
     });

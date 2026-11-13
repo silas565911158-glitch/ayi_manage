@@ -115,21 +115,21 @@
   border-top: 2rpx solid #E4D8C7;
 }
 
-.info-grid {
+.info-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 18rpx 24rpx;
+  gap: 24rpx;
+  margin-top: 18rpx;
 }
 
 .info-item {
   display: block;
-  width: calc(50% - 12rpx);
+  flex: 1;
   min-width: 0;
   box-sizing: border-box;
 }
 
-.info-item.wide {
-  width: 100%;
+.address-row {
+  display: block;
 }
 
 .info-label {

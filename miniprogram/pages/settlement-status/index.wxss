@@ -1,0 +1,26 @@
+.status-page { padding-bottom: calc(72rpx + env(safe-area-inset-bottom)); }
+.status-page .flow-title { margin-top: 0; }
+
+.status-card {
+  margin-top: 24rpx;
+  padding: 28rpx;
+  border: 2rpx solid #E4D8C7;
+  border-radius: 32rpx;
+  background: #FFFDFA;
+  box-shadow: 0 10rpx 30rpx rgba(34, 38, 45, 0.06);
+}
+
+.days { color: #22262D; font-size: 40rpx; font-weight: 700; line-height: 48rpx; }
+.range { margin-top: 4rpx; color: #6B6459; font-size: 24rpx; line-height: 34rpx; }
+.formula { margin-top: 22rpx; color: #22262D; font-size: 34rpx; font-weight: 700; line-height: 44rpx; font-variant-numeric: tabular-nums; }
+.contract { margin-top: 6rpx; color: #555047; font-size: 26rpx; line-height: 36rpx; }
+.paid { margin-top: 18rpx; color: #C9402A; font-size: 48rpx; font-weight: 700; line-height: 56rpx; font-variant-numeric: tabular-nums; }
+.difference { margin-top: 4rpx; color: #8E2B1A; font-size: 26rpx; font-weight: 600; }
+.reason { margin-top: 4rpx; color: #555047; font-size: 26rpx; }
+.proofs { display: flex; gap: 14rpx; margin-top: 20rpx; }
+.proofs image { width: 150rpx; height: 150rpx; border-radius: 12rpx; background: #EFE7DA; }
+
+.actions { display: flex; gap: 16rpx; margin-top: 28rpx; }
+.actions button { flex: 1; width: auto; margin-top: 0; }
+.single-action { margin-top: 28rpx; }
+.single-action button { margin-top: 0; }

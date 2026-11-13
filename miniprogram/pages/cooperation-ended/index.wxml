@@ -1,0 +1,19 @@
+<view class="page flow-page ended-page">
+  <view wx:if="{{loading}}" class="quiet">正在读取……</view>
+
+  <block wx:else>
+    <view class="ended-icon">✓</view>
+    <view class="ended-title">合作已结束</view>
+    <view class="ended-copy">这段合作已归档，历史记录会保留。</view>
+
+    <view class="summary-card">
+      <view class="summary-row"><text>已结算</text><text>{{summary.settledStages}} 期</text></view>
+      <view class="summary-row"><text>累计干了</text><text>{{summary.totalSettledDays}} 天</text></view>
+      <view class="summary-row"><text>累计支付</text><text>{{totalPaidText}}</text></view>
+      <view class="summary-row"><text>结束原因</text><text>{{endedReason}}</text></view>
+    </view>
+
+    <button class="button-primary restart-button" hover-class="button-hover" bindtap="restart">重新选择身份</button>
+    <view wx:if="{{error}}" class="status-error">{{error}}</view>
+  </block>
+</view>

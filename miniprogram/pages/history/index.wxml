@@ -1,7 +1,6 @@
 <view class="page history-page">
   <view wx:if="{{loading}}" class="quiet">正在读取……</view>
 
-  <block wx:else>
     <view class="history-header">
       <scroll-view wx:if="{{contractTabs.length > 1}}" scroll-x class="contract-tabs">
         <view class="contract-tab-list">
@@ -30,17 +29,23 @@
         </view>
       </view>
 
-      <button wx:if="{{contract}}" class="contract-toggle" hover-class="button-hover" bindtap="toggleContract">
+      <view wx:if="{{contract}}" class="contract-toggle" hover-class="button-hover" bindtap="toggleContract">
         <view class="contract-toggle-label">合同信息</view>
         <view class="contract-toggle-chevron {{showContract ? 'expanded' : ''}}">⌄</view>
-      </button>
+      </view>
 
       <view wx:if="{{contract && showContract}}" class="contract-detail">
-        <view class="info-grid">
+        <view class="info-row">
           <view class="info-item">
             <view class="info-label">合作定价</view>
             <view class="info-value">{{contract.totalAmount}} 元 / {{contract.targetDays}} 天</view>
           </view>
+          <view class="info-item">
+            <view class="info-label">日薪</view>
+            <view class="info-value">{{dailySalaryText}} / 天</view>
+          </view>
+        </view>
+        <view class="info-row">
           <view class="info-item">
             <view class="info-label">开始日期</view>
             <view class="info-value">{{contract.startText}}</view>
@@ -49,16 +54,18 @@
             <view class="info-label">围栏半径</view>
             <view class="info-value">{{contract.radiusMeters}} 米</view>
           </view>
-          <view class="info-item">
-            <view class="info-label">合作状态</view>
-            <view class="info-value"><text class="status-pill">{{contract.status === 'active' ? '合作中' : '已结束'}}</text></view>
+        </view>
+          <view class="info-row">
+            <view class="info-item">
+              <view class="info-label">合作状态</view>
+              <view class="info-value"><text class="status-pill">{{contract.status === 'active' ? '合作中' : '已结束'}}</text></view>
+            </view>
           </view>
-          <view class="info-item wide">
+          <view class="info-row address-row">
             <view class="info-label">家庭地址</view>
             <view class="info-value">{{contract.homeLocation.address}}</view>
           </view>
         </view>
-      </view>
     </view>
 
     <view class="settlement" wx:for="{{settlements}}" wx:key="_id">
@@ -94,7 +101,6 @@
         />
       </view>
     </view>
-  </block>
 
   <view wx:if="{{!loading && !settlements.length}}" class="empty">还没有双方确认的结算记录。</view>
 </view>

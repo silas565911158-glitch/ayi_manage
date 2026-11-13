@@ -3,11 +3,8 @@
 const { api } = require('../../services/api');
 const { buildCalendarMonth, getCalendarNavigation } = require('../../services/calendar-state');
 const {
-  buildSettlementExplanation,
   formatCompactDateWithYear,
   formatCompactMoney,
-  formatMoney,
-  getTransferProofUrl,
   formatShanghaiClockTime
 } = require('../../services/view-state');
 
@@ -34,12 +31,7 @@ Page({
     showAuxiliary: false,
     stageStartText: '',
     cumulativeWorkText: '',
-    lastCooperationSummaryText: '',
-    dailySalaryText: '',
     totalPaidCompactText: '',
-    paidText: '',
-    pendingExplanation: null,
-    pendingTitle: '',
     todayClockText: '',
     checkinUnavailableText: '',
     bottomCheckinText: '',
@@ -74,28 +66,13 @@ Page({
         }
         const state = result.data;
         if (this.routeFromState(state)) return;
-        const pending = state.pendingSettlement;
         const [todayYear, todayMonth] = state.today.localDate.split('-').map(Number);
         const checkinTime = state.today.checkin && (state.today.checkin.workTime || state.today.checkin.serverTime)
           ? formatShanghaiClockTime(state.today.checkin.workTime || state.today.checkin.serverTime)
           : '';
-        const pendingExplanation = pending
-          ? buildSettlementExplanation({
-            totalAmount: pending.totalAmount,
-            targetDays: pending.targetDays,
-            days: pending.days,
-            dailySalary: pending.dailySalary,
-            suggestedAmount: pending.suggestedAmount,
-            paidAmount: pending.paidAmount
-          })
-          : null;
         const bottomCheckinText = state.today.checkedIn
           ? '已打卡'
-          : pending
-            ? pending.status === 'disputed'
-              ? '待雇主处理'
-              : '待确认结算'
-            : state.today.localDate < state.currentStage.startLocalDate
+          : state.today.localDate < state.currentStage.startLocalDate
               ? '未开始'
               : '去打卡';
         this.setData({
@@ -105,29 +82,14 @@ Page({
           year: todayYear,
           month: todayMonth,
           stageStartText: formatCompactDateWithYear(state.currentStage.startLocalDate),
-          lastCooperationSummaryText: state.lastCooperation
-            ? `已结算 ${state.lastCooperation.summary.settledStages} 期 · 累计干了 ${state.lastCooperation.summary.totalSettledDays} 天`
-            : '',
           cumulativeWorkText: state.user.role === 'employee'
             ? `累计工作 ${state.cumulativeWorkDays || 0} 天${state.currentStage.backfillDays ? ` · 含补录 ${state.currentStage.backfillDays} 天` : ''}`
             : `历史已结算 ${state.settlementSummary.settledStages} 期`,
-          dailySalaryText: formatMoney(state.currentStage ? state.currentStage.dailySalary : 0),
           totalPaidCompactText: formatCompactMoney(
             state.settlementSummary ? state.settlementSummary.totalPaidAmount : 0
           ),
-          paidText: pendingExplanation ? pendingExplanation.paidText : '',
-          pendingExplanation,
-          pendingTitle: pending
-            ? pending.status === 'disputed'
-              ? '阿姨对金额有疑问'
-              : state.user.role === 'employer'
-                ? '等待阿姨确认收款'
-                : '雇主已结算，请确认'
-            : '',
           todayClockText: checkinTime || '--:--',
-          checkinUnavailableText: pending
-            ? '待确认收款'
-            : state.today.localDate < state.currentStage.startLocalDate
+          checkinUnavailableText: state.today.localDate < state.currentStage.startLocalDate
               ? '未开始'
               : '今日暂不能打卡',
           bottomCheckinText,
@@ -151,11 +113,17 @@ Page({
     if (this.data.routing) return true;
     let url = '';
     if (!state.contract) {
-      if (state.lastCooperation) return false;
+      if (state.lastCooperation) {
+        url = '/pages/onboarding/index?reselect=1';
+      } else {
       url = state.user.role === 'employer'
         ? '/pages/employer/create/index'
         : '/pages/employee/join/index';
-    } else if (state.user.role === 'employer' && !state.contract.employeeBound) {
+      }
+    }
+    if (!url && state.pendingSettlement) {
+      url = '/pages/settlement-status/index';
+    } else if (!url && state.user.role === 'employer' && !state.contract.employeeBound) {
       url = '/pages/employer/waiting/index';
     }
     if (!url) return false;
@@ -234,55 +202,6 @@ Page({
       });
   },
 
-  confirmSettlement() {
-    wx.showModal({
-      title: '确认收款',
-      content: `确认收到 ${this.data.paidText}？确认后可以继续打卡。`,
-      confirmText: '确认收款',
-      cancelText: '再看看',
-      success: ({ confirm }) => {
-        if (!confirm) return;
-        api.call('confirmSettlementRequest').then((result) => {
-          if (!result.ok) throw new Error(result.message);
-          wx.showToast({ title: '已确认', icon: 'success' });
-          this.refresh();
-        }).catch((error) => wx.showToast({ title: error.message, icon: 'none' }));
-      }
-    });
-  },
-
-  disputeSettlement() {
-    api.call('disputeSettlementRequest', { reason: '金额不对' }).then((result) => {
-      if (!result.ok) throw new Error(result.message);
-      wx.showToast({ title: '已通知雇主', icon: 'none' });
-      this.refresh();
-    }).catch((error) => wx.showToast({ title: error.message, icon: 'none' }));
-  },
-
-  cancelSettlement() {
-    wx.showModal({
-      title: '取消结算',
-      content: '取消后这一期继续记工，不会生成历史记录。',
-      confirmText: '取消结算',
-      cancelText: '保留',
-      success: ({ confirm }) => {
-        if (!confirm) return;
-        api.call('cancelSettlementRequest').then((result) => {
-          if (!result.ok) throw new Error(result.message);
-          this.refresh();
-        }).catch((error) => wx.showToast({ title: error.message, icon: 'none' }));
-      }
-    });
-  },
-
-  previewProof(event) {
-    const proofs = this.data.state.pendingSettlement.transferProofs;
-    wx.previewImage({
-      current: getTransferProofUrl(proofs[Number(event.currentTarget.dataset.index)]),
-      urls: proofs.map(getTransferProofUrl)
-    });
-  },
-
   toggleAuxiliary() {
     this.setData({ showAuxiliary: !this.data.showAuxiliary });
   },
@@ -313,10 +232,6 @@ Page({
 
   goSettlement() {
     if (!this.data.state) return;
-    if (this.data.state.pendingSettlement) {
-      wx.showToast({ title: '阿姨确认后才能继续结算', icon: 'none' });
-      return;
-    }
     if (this.data.state.currentStage.days < 1) {
       wx.showToast({ title: '这一期还没有上工记录', icon: 'none' });
       return;
@@ -343,10 +258,6 @@ Page({
 
   goTermination() {
     if (!this.data.state) return;
-    if (this.data.state.pendingSettlement) {
-      wx.showToast({ title: '阿姨确认结算后才能终止', icon: 'none' });
-      return;
-    }
     if (this.data.state.currentStage.days > 0) {
       wx.showToast({ title: '请先结算这一期', icon: 'none' });
       return;
@@ -355,7 +266,7 @@ Page({
   },
 
   goOnboarding() {
-    wx.reLaunch({ url: '/pages/onboarding/index' });
+    wx.reLaunch({ url: '/pages/onboarding/index?reselect=1' });
   }
 
 });

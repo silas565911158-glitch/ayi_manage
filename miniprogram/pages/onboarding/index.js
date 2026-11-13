@@ -22,6 +22,7 @@ Page({
     api.call('getCurrentState')
       .then((result) => {
         if (!result.ok || !result.data || !result.data.user) return;
+        if (!result.data.contract && result.data.lastCooperation) return;
         this.routeToNextStep(result.data);
       })
       .catch(() => {});
