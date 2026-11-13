@@ -10,10 +10,12 @@ function buildCalendarMonth({
   startLocalDate = '0000-01-01',
   today = '',
   checkinDates = [],
-  settledDates = []
+  settledDates = [],
+  checkinRecords = [],
+  settledRecords = []
 }) {
-  const checkedSet = new Set(checkinDates);
-  const settledSet = new Set(settledDates);
+  const checkedMap = buildCheckinMap(checkinRecords.length ? checkinRecords : checkinDates);
+  const settledMap = buildCheckinMap(settledRecords.length ? settledRecords : settledDates);
   const firstDay = new Date(`${toLocalDateKey(year, month, 1)}T00:00:00+08:00`);
   const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
   const weekdayOffset = (firstDay.getUTCDay() + 6) % 7;
@@ -24,6 +26,8 @@ function buildCalendarMonth({
     checkedIn: false,
     settled: false,
     markText: '',
+    timeText: '',
+    source: '',
     today: false,
     future: false,
     stageStart: false
@@ -32,14 +36,18 @@ function buildCalendarMonth({
   for (let day = 1; day <= daysInMonth; day += 1) {
     const date = toLocalDateKey(year, month, day);
     const withinStage = date >= startLocalDate;
-    const checkedIn = checkedSet.has(date);
+    const checkedIn = checkedMap.has(date);
+    const settled = settledMap.has(date) && !checkedIn;
+    const record = checkedIn ? checkedMap.get(date) : settledMap.get(date) || null;
     cells.push({
       date,
       day,
       withinStage,
       checkedIn,
-      settled: settledSet.has(date) && !checkedIn,
-      markText: checkedIn ? '✓' : '',
+      settled,
+      markText: '',
+      timeText: record ? record.time : '',
+      source: record ? record.source : '',
       today: date === today,
       future: Boolean(today && date > today),
       stageStart: date === startLocalDate
@@ -54,6 +62,8 @@ function buildCalendarMonth({
       checkedIn: false,
       settled: false,
       markText: '',
+    timeText: '',
+    source: '',
       today: false,
       future: false,
       stageStart: false
@@ -68,6 +78,23 @@ function buildCalendarMonth({
     ),
     legend: []
   };
+}
+
+function buildCheckinMap(records) {
+  const map = new Map();
+  records.forEach((value) => {
+    if (typeof value === 'string') {
+      map.set(value, { localDate: value, time: '', source: '' });
+      return;
+    }
+    if (!value || !value.localDate) return;
+    map.set(value.localDate, {
+      localDate: value.localDate,
+      time: value.time || value.workTime || '',
+      source: value.source || ''
+    });
+  });
+  return map;
 }
 
 function monthIndex(localDate) {

@@ -1,0 +1,53 @@
+<view class="page flow-page termination-page">
+  <view wx:if="{{loading}}" class="quiet">正在读取……</view>
+
+  <block wx:else>
+    <view class="flow-title">终止合同</view>
+    <view class="flow-lead">终止后当前合作不能再打卡，已确认的结算记录会保留。</view>
+
+    <view class="flow-card">
+      <view class="section-title">终止后将发生什么</view>
+      <view class="fact-list">
+        <view>当前合作立即结束，不能再打卡</view>
+        <view>已确认的结算历史继续保留</view>
+        <view>你可以重新创建合作</view>
+        <view>阿姨可以用新匹配码加入</view>
+      </view>
+    </view>
+
+    <view class="flow-card">
+      <view class="section-title">当前状态</view>
+      <view class="summary-row"><text>当前期数</text><text>第 {{state.currentStage.stageIndex}} 期</text></view>
+      <view class="summary-row"><text>本期已上工</text><text>{{state.currentStage.days}} 天</text></view>
+      <view class="summary-row"><text>历史已结算</text><text>{{state.settlementSummary.settledStages}} 期</text></view>
+      <view class="summary-row"><text>累计支付</text><text>{{totalPaidText}}</text></view>
+    </view>
+
+    <view class="flow-card">
+      <view class="section-title">终止原因</view>
+      <view class="reason-list">
+        <button
+          wx:for="{{reasons}}"
+          wx:key="*this"
+          class="reason-chip {{reason === item ? 'selected' : ''}}"
+          data-reason="{{item}}"
+          bindtap="selectReason"
+        >{{item}}</button>
+      </view>
+      <textarea
+        wx:if="{{reason === '其他'}}"
+        class="other-input"
+        value="{{otherReason}}"
+        bindinput="inputOtherReason"
+        maxlength="120"
+        placeholder="填写具体原因"
+      />
+      <view wx:if="{{state.pendingSettlement || state.currentStage.days > 0}}" class="status-error">
+        {{state.pendingSettlement ? '阿姨确认结算后才能终止' : '这一期还有未结算天数，请先结算'}}
+      </view>
+      <button class="button-danger termination-button" disabled="{{submitting || state.pendingSettlement || state.currentStage.days > 0}}" bindtap="submit">
+        {{submitting ? '正在终止…' : '确认终止合同'}}
+      </button>
+    </view>
+  </block>
+</view>

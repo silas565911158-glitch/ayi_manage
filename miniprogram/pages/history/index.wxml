@@ -2,41 +2,97 @@
   <view wx:if="{{loading}}" class="quiet">正在读取……</view>
 
   <block wx:else>
-  <view class="summary">
-    <view>
-      <view class="summary-label">已结算</view>
-      <view class="summary-value">{{summary.settledStages}} 期</view>
-    </view>
-    <view>
-      <view class="summary-label">{{role === 'employer' ? '累计支付' : '累计到账'}}</view>
-      <view class="summary-value">{{totalPaidText}}</view>
-    </view>
-    <view>
-      <view class="summary-label">累计干了</view>
-      <view class="summary-value">{{totalSettledDaysText}} 天</view>
-    </view>
-  </view>
+    <view class="history-header">
+      <scroll-view wx:if="{{contractTabs.length > 1}}" scroll-x class="contract-tabs">
+        <view class="contract-tab-list">
+          <view
+            wx:for="{{contractTabs}}"
+            wx:key="id"
+            class="contract-tab {{selectedContractId === item.id ? 'active' : ''}}"
+            data-id="{{item.id}}"
+            bindtap="selectContract"
+          >{{item.label}}</view>
+        </view>
+      </scroll-view>
 
-  <view class="settlement" wx:for="{{settlements}}" wx:key="_id">
-    <view class="stage">第 {{item.stageIndex}} 期</view>
-    <view class="range">{{item.stageStartLocalDate}} 至 {{item.workEndLocalDate}}</view>
-    <view class="facts">
-      <text>干了 {{item.days}} 天</text>
-      <text>日薪 {{item.dailySalaryText}}</text>
+      <view class="summary-grid">
+        <view>
+          <view class="summary-label">已结算</view>
+          <view class="summary-value">{{summary.settledStages}} 期</view>
+        </view>
+        <view>
+          <view class="summary-label">{{role === 'employer' ? '累计支付' : '累计到账'}}</view>
+          <view class="summary-value">{{totalPaidText}}</view>
+        </view>
+        <view>
+          <view class="summary-label">累计干了</view>
+          <view class="summary-value">{{totalSettledDaysText}} 天</view>
+        </view>
+      </view>
+
+      <button wx:if="{{contract}}" class="contract-toggle" hover-class="button-hover" bindtap="toggleContract">
+        合同信息
+      </button>
+
+      <view wx:if="{{contract && showContract}}" class="contract-detail">
+        <view class="info-grid">
+          <view class="info-item">
+            <view class="info-label">合作定价</view>
+            <view class="info-value">{{contract.totalAmount}} 元 / {{contract.targetDays}} 天</view>
+          </view>
+          <view class="info-item">
+            <view class="info-label">开始日期</view>
+            <view class="info-value">{{contract.startText}}</view>
+          </view>
+          <view class="info-item">
+            <view class="info-label">围栏半径</view>
+            <view class="info-value">{{contract.radiusMeters}} 米</view>
+          </view>
+          <view class="info-item">
+            <view class="info-label">合作状态</view>
+            <view class="info-value">{{contract.status === 'active' ? '合作中' : '已结束'}}</view>
+          </view>
+          <view class="info-item wide">
+            <view class="info-label">家庭地址</view>
+            <view class="info-value">{{contract.homeLocation.address}}</view>
+          </view>
+        </view>
+      </view>
     </view>
-    <view class="calculation">
-      <view class="calculation-formula">{{item.calculation.formulaText}} = {{item.calculation.suggestedText}}</view>
-      <view class="calculation-detail">{{item.calculation.contractText}} = {{item.calculation.dailySalaryText}}</view>
-      <view class="calculation-detail">{{item.calculation.calculationText}} = {{item.calculation.suggestedText}}</view>
-      <view class="calculation-detail">按合同计算 {{item.calculation.suggestedText}}</view>
+
+    <view class="settlement" wx:for="{{settlements}}" wx:key="_id">
+      <view class="record-main">
+        <view>
+          <view class="stage">第 {{item.stageIndex}} 期</view>
+          <view class="range">{{item.stageStartText}} 至 {{item.workEndText}}</view>
+        </view>
+        <view class="amount">
+          <view class="amount-value">{{item.paidText}}</view>
+          <view class="amount-label">结算工资</view>
+        </view>
+      </view>
+      <view class="facts">
+        <view>
+          <view class="fact-label">干了</view>
+          <view class="fact-value">{{item.days}} 天</view>
+        </view>
+        <view>
+          <view class="fact-label">平均到岗</view>
+          <view class="fact-value">{{item.averageArrivalText}}</view>
+        </view>
+      </view>
+      <view wx:if="{{item.transferProofs.length}}" class="proofs">
+        <image
+          wx:for="{{item.transferProofs}}"
+          wx:for-item="proof"
+          wx:key="fileId"
+          src="{{proof.temporaryUrl || proof.fileId}}"
+          mode="aspectFill"
+          data-url="{{proof.temporaryUrl || proof.fileId}}"
+          bindtap="previewProof"
+        />
+      </view>
     </view>
-    <view class="paid">实付 {{item.paidText}}</view>
-    <view wx:if="{{item.calculation.differenceText}}" class="difference">{{item.calculation.differenceText}}</view>
-    <view wx:if="{{item.differenceReason}}" class="difference-reason">原因：{{item.differenceReason}}</view>
-    <view class="proofs" wx:if="{{item.transferProofs.length}}">
-      <image wx:for="{{item.transferProofs}}" wx:for-item="proof" wx:key="fileId" src="{{proof.temporaryUrl || proof.fileId}}" mode="aspectFill" data-url="{{proof.temporaryUrl || proof.fileId}}" bindtap="previewProof" />
-    </view>
-  </view>
   </block>
 
   <view wx:if="{{!loading && !settlements.length}}" class="empty">还没有双方确认的结算记录。</view>

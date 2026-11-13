@@ -2,18 +2,26 @@
   <view wx:if="{{loading}}" class="quiet">正在读取……</view>
 
   <view wx:elif="{{!state || !state.contract}}" class="empty-main">
-    <view class="empty-title">还没有建立合作</view>
-    <view class="empty-desc">请先完成身份选择和匹配。</view>
-    <button wx:if="{{role === 'employer'}}" class="primary-button" hover-class="button-hover" bindtap="goCreate">创建合作</button>
-    <button wx:elif="{{role === 'employee'}}" class="primary-button" hover-class="button-hover" bindtap="goJoin">输入匹配码</button>
+    <view class="empty-title">{{state.lastCooperation ? '合作已结束' : '还没有建立合作'}}</view>
+    <view class="empty-desc">{{state.lastCooperation ? lastCooperationSummaryText : '请先完成身份选择和匹配。'}}</view>
+    <button wx:if="{{role === 'employer'}}" class="primary-button" hover-class="button-hover" bindtap="goCreate">
+      {{state.lastCooperation ? '创建新合作' : '创建合作'}}
+    </button>
+    <button wx:elif="{{role === 'employee'}}" class="primary-button" hover-class="button-hover" bindtap="goJoin">
+      {{state.lastCooperation ? '输入新匹配码' : '输入匹配码'}}
+    </button>
     <button wx:else class="primary-button" hover-class="button-hover" bindtap="goOnboarding">选择身份</button>
+    <button wx:if="{{state.lastCooperation}}" class="plain-button ended-reselect" hover-class="button-hover" bindtap="goOnboarding">重新选择身份</button>
   </view>
 
   <block wx:else>
     <view class="stage-summary-card">
       <view class="stage-card-top">
         <view class="stage-leading"></view>
-        <view class="stage-context">第 {{state.currentStage.stageIndex}} 期 · {{stageStartText}}开始</view>
+        <view class="stage-context">
+          <view class="stage-context-main">第 {{state.currentStage.stageIndex}} 期 · {{stageStartText}}开始</view>
+          <view class="stage-context-sub">{{cumulativeWorkText}}</view>
+        </view>
         <view
           class="auxiliary-trigger"
           hover-class="button-hover"
@@ -62,18 +70,11 @@
       </view>
 
       <view wx:if="{{showAuxiliary}}" class="auxiliary-panel">
-        <button class="auxiliary-button" hover-class="button-hover" bindtap="toggleContract">合作信息</button>
         <button wx:if="{{isMock && role === 'employer'}}" class="auxiliary-button" hover-class="button-hover" bindtap="switchMockRole" data-role="employee">体验阿姨端</button>
         <button wx:if="{{isMock && role === 'employee'}}" class="auxiliary-button" hover-class="button-hover" bindtap="switchMockRole" data-role="employer">体验雇主端</button>
         <button wx:if="{{isMock}}" class="auxiliary-button danger" hover-class="button-hover" bindtap="resetMockData">重置数据</button>
       </view>
 
-      <view wx:if="{{showContract}}" class="contract-box">
-        <view class="contract-row"><text>日薪</text><text>{{dailySalaryText}} / 天</text></view>
-        <view class="contract-row"><text>合作定价</text><text>{{state.contract.totalAmount}} 元 / {{state.contract.targetDays}} 天</text></view>
-        <view class="contract-row"><text>家庭地址</text><text>{{state.contract.homeLocation.address}}</text></view>
-        <view class="contract-row"><text>围栏半径</text><text>{{state.contract.radiusMeters}} 米</text></view>
-      </view>
     </view>
 
     <view wx:if="{{reminderText}}" class="reminder">{{reminderText}}</view>
@@ -125,8 +126,9 @@
       <view class="calendar-grid">
         <view wx:for="{{calendar.weeks}}" wx:for-index="weekIndex" wx:key="weekIndex" class="calendar-week">
           <view wx:for="{{item}}" wx:for-item="day" wx:for-index="dayIndex" wx:key="dayIndex" class="day-cell {{day.checkedIn ? 'checked' : ''}} {{day.settled ? 'settled' : ''}} {{day.today ? 'today' : ''}} {{day.future ? 'future' : ''}} {{day.settled ? '' : (day.withinStage ? '' : 'outside')}}">
-            <text class="day-number">{{day.day || ''}}</text>
-            <text class="day-mark">{{day.markText}}</text>
+            <view wx:if="{{day.checkedIn}}" class="day-dot"></view>
+            <view class="day-number">{{day.day || ''}}</view>
+            <view class="day-time">{{day.timeText}}</view>
           </view>
         </view>
       </view>
@@ -151,12 +153,26 @@
 
     <view wx:elif="{{role === 'employer'}}" class="bottom-action-bar">
       <view
-        class="bottom-settlement-button {{state.pendingSettlement || state.currentStage.days < 1 || state.today.checkedIn ? 'disabled' : ''}}"
-        hover-class="{{state.pendingSettlement || state.currentStage.days < 1 || state.today.checkedIn ? 'none' : 'button-hover'}}"
+        class="bottom-settlement-button {{state.pendingSettlement || state.currentStage.days < 1 ? 'disabled' : ''}}"
+        hover-class="{{state.pendingSettlement || state.currentStage.days < 1 ? 'none' : 'button-hover'}}"
         aria-role="button"
-        aria-disabled="{{state.pendingSettlement || state.currentStage.days < 1 || state.today.checkedIn}}"
+        aria-disabled="{{state.pendingSettlement || state.currentStage.days < 1}}"
         bindtap="goSettlement"
-      >{{state.pendingSettlement ? '等待阿姨确认' : state.currentStage.days < 1 ? '暂无可结算' : state.today.checkedIn ? '明日可结算' : '结算这一期'}}</view>
+      >{{state.pendingSettlement ? '等待确认' : state.currentStage.days < 1 ? '暂无可结算' : '结算'}}</view>
+      <view
+        class="employer-secondary-button {{!state.backfill.canBackfill || state.backfill.eligibleLocalDates.length < 1 ? 'disabled' : ''}}"
+        hover-class="{{!state.backfill.canBackfill || state.backfill.eligibleLocalDates.length < 1 ? 'none' : 'button-hover'}}"
+        aria-role="button"
+        aria-disabled="{{!state.backfill.canBackfill || state.backfill.eligibleLocalDates.length < 1}}"
+        bindtap="goBackfill"
+      >补录</view>
+      <view
+        class="employer-danger-button {{state.pendingSettlement || state.currentStage.days > 0 ? 'disabled' : ''}}"
+        hover-class="{{state.pendingSettlement || state.currentStage.days > 0 ? 'none' : 'button-hover'}}"
+        aria-role="button"
+        aria-disabled="{{state.pendingSettlement || state.currentStage.days > 0}}"
+        bindtap="goTermination"
+      >终止</view>
     </view>
   </block>
 </view>

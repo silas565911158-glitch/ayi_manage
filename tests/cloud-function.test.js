@@ -71,7 +71,7 @@ describe('attendance cloud function', () => {
     };
     const handler = createHandler({ cloudSDK, repositoryFactory: () => repository, now: () => now });
     const result = await handler({ action: 'joinContract', payload: { inviteCode: 'ABCDEFGH' } });
-    expect(result).toMatchObject({ ok: true, data: { contract: { employeeOpenid: 'openid-server' } } });
+    expect(result).toMatchObject({ ok: true, data: { contract: { employeeBound: true } } });
   });
 
   test('adds temporary URLs to private transfer proofs', async () => {

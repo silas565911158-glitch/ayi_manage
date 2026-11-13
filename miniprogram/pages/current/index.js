@@ -31,9 +31,10 @@ Page({
     checkingIn: false,
     role: '',
     state: null,
-    showContract: false,
     showAuxiliary: false,
     stageStartText: '',
+    cumulativeWorkText: '',
+    lastCooperationSummaryText: '',
     dailySalaryText: '',
     totalPaidCompactText: '',
     paidText: '',
@@ -75,8 +76,8 @@ Page({
         if (this.routeFromState(state)) return;
         const pending = state.pendingSettlement;
         const [todayYear, todayMonth] = state.today.localDate.split('-').map(Number);
-        const checkinTime = state.today.checkin && state.today.checkin.serverTime
-          ? formatShanghaiClockTime(state.today.checkin.serverTime)
+        const checkinTime = state.today.checkin && (state.today.checkin.workTime || state.today.checkin.serverTime)
+          ? formatShanghaiClockTime(state.today.checkin.workTime || state.today.checkin.serverTime)
           : '';
         const pendingExplanation = pending
           ? buildSettlementExplanation({
@@ -104,6 +105,12 @@ Page({
           year: todayYear,
           month: todayMonth,
           stageStartText: formatCompactDateWithYear(state.currentStage.startLocalDate),
+          lastCooperationSummaryText: state.lastCooperation
+            ? `已结算 ${state.lastCooperation.summary.settledStages} 期 · 累计干了 ${state.lastCooperation.summary.totalSettledDays} 天`
+            : '',
+          cumulativeWorkText: state.user.role === 'employee'
+            ? `累计工作 ${state.cumulativeWorkDays || 0} 天${state.currentStage.backfillDays ? ` · 含补录 ${state.currentStage.backfillDays} 天` : ''}`
+            : `历史已结算 ${state.settlementSummary.settledStages} 期`,
           dailySalaryText: formatMoney(state.currentStage ? state.currentStage.dailySalary : 0),
           totalPaidCompactText: formatCompactMoney(
             state.settlementSummary ? state.settlementSummary.totalPaidAmount : 0
@@ -144,10 +151,11 @@ Page({
     if (this.data.routing) return true;
     let url = '';
     if (!state.contract) {
+      if (state.lastCooperation) return false;
       url = state.user.role === 'employer'
         ? '/pages/employer/create/index'
         : '/pages/employee/join/index';
-    } else if (state.user.role === 'employer' && !state.contract.employeeOpenid) {
+    } else if (state.user.role === 'employer' && !state.contract.employeeBound) {
       url = '/pages/employer/waiting/index';
     }
     if (!url) return false;
@@ -168,7 +176,9 @@ Page({
       startLocalDate: state.currentStage.startLocalDate,
       today: state.today.localDate,
       checkinDates: (state.checkins || []).map((item) => item.localDate),
-      settledDates: state.settledCheckinDates || []
+      checkinRecords: state.calendarCheckins || [],
+      settledDates: state.settledCheckinDates || [],
+      settledRecords: state.settledCalendarCheckins || []
     });
     const navigation = getCalendarNavigation({
       startLocalDate: state.currentStage.startLocalDate,
@@ -273,13 +283,6 @@ Page({
     });
   },
 
-  toggleContract() {
-    this.setData({
-      showContract: !this.data.showContract,
-      showAuxiliary: false
-    });
-  },
-
   toggleAuxiliary() {
     this.setData({ showAuxiliary: !this.data.showAuxiliary });
   },
@@ -318,10 +321,6 @@ Page({
       wx.showToast({ title: '这一期还没有上工记录', icon: 'none' });
       return;
     }
-    if (this.data.state.today.checkedIn) {
-      wx.showToast({ title: '今天已有打卡，明天可结算', icon: 'none' });
-      return;
-    }
     const url = '/pages/settlement/index';
     wx.navigateTo({
       url,
@@ -332,6 +331,27 @@ Page({
         });
       }
     });
+  },
+
+  goBackfill() {
+    if (!this.data.state || !this.data.state.backfill || !this.data.state.backfill.canBackfill) {
+      wx.showToast({ title: '请先处理待确认结算', icon: 'none' });
+      return;
+    }
+    wx.navigateTo({ url: '/pages/backfill/index' });
+  },
+
+  goTermination() {
+    if (!this.data.state) return;
+    if (this.data.state.pendingSettlement) {
+      wx.showToast({ title: '阿姨确认结算后才能终止', icon: 'none' });
+      return;
+    }
+    if (this.data.state.currentStage.days > 0) {
+      wx.showToast({ title: '请先结算这一期', icon: 'none' });
+      return;
+    }
+    wx.navigateTo({ url: '/pages/termination/index' });
   },
 
   goOnboarding() {

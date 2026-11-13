@@ -41,6 +41,8 @@ async function handleAction({ action, payload = {}, openid, now = new Date(), re
       return createCheckinChallenge({ openid, now, repository });
     case 'submitCheckin':
       return submitCheckin({ payload, openid, now, repository });
+    case 'createBackfillCheckins':
+      return createBackfillCheckins({ payload, openid, now, repository });
     case 'createSettlementRequest':
       return createSettlementRequest({ payload, openid, now, repository });
     case 'confirmSettlementRequest':
@@ -51,6 +53,8 @@ async function handleAction({ action, payload = {}, openid, now = new Date(), re
       return cancelSettlementRequest({ openid, now, repository });
     case 'listHistory':
       return listHistory({ openid, repository });
+    case 'terminateContract':
+      return terminateContract({ payload, openid, now, repository });
     default:
       throw new BusinessError('UNKNOWN_ACTION', `未知操作：${action}`);
   }
@@ -104,7 +108,18 @@ function publicUser(user) {
 function publicCheckin(checkin) {
   return {
     localDate: checkin.localDate,
-    serverTime: checkin.serverTime
+    serverTime: checkin.serverTime,
+    source: checkin.source || 'employee_checkin',
+    workTime: checkin.workTime || checkin.serverTime,
+    reason: checkin.reason || checkin.backfillReason || null
+  };
+}
+
+function publicCalendarCheckin(checkin) {
+  return {
+    localDate: checkin.localDate,
+    time: checkin.workTime || checkin.serverTime,
+    source: checkin.source || 'employee_checkin'
   };
 }
 
@@ -322,10 +337,24 @@ async function getCurrentState({ openid, now, repository }) {
   const user = await requireUser(repository, openid);
   const contract = await repository.findActiveContractByParticipant(openid);
   if (!contract) {
+    const previousContracts = await repository.listContractsForParticipant(openid);
+    const previous = previousContracts.find((item) => item.status === 'ended') || null;
+    let lastCooperation = null;
+    if (previous) {
+      const settlements = await repository.listSettlements(previous._id);
+      lastCooperation = {
+        contractId: previous._id,
+        status: previous.status,
+        endedAt: previous.endedAt,
+        endedReason: previous.endedReason,
+        summary: summarizeSettlements(settlements)
+      };
+    }
     return {
       user: publicUser(user),
       contract: null,
       cycle: null,
+      lastCooperation,
       progress: null,
       reminder: { required: false },
       nextAction: user.role === 'employer' ? 'createContract' : 'joinContract'
@@ -334,7 +363,8 @@ async function getCurrentState({ openid, now, repository }) {
 
   const cycle = await repository.findOpenCycle(contract._id);
   if (!cycle) throw new BusinessError('NO_OPEN_STAGE', '当前合同没有进行中的一期');
-  const checkins = await repository.listCheckins(cycle._id);
+  const contractCheckins = await repository.listCheckinsByContract(contract._id);
+  const checkins = contractCheckins.filter((checkin) => checkin.cycleId === cycle._id);
   const localDate = toShanghaiLocalDate(now);
   const todayCheckin = await repository.getContractCheckin(contract._id, localDate);
   const pendingSettlement = await repository.findPendingSettlementRequest(contract._id);
@@ -352,6 +382,9 @@ async function getCurrentState({ openid, now, repository }) {
 
   const settlementRecords = await repository.listSettlements(contract._id);
   const settledCheckinDates = await listSettledCheckinDates(settlementRecords, repository);
+  const settledCalendarCheckins = contractCheckins
+    .filter((checkin) => checkin.cycleId !== cycle._id)
+    .map(publicCalendarCheckin);
   const exposedContract = publicContract(contract);
   if (
     !contract.employeeOpenid &&
@@ -369,10 +402,18 @@ async function getCurrentState({ openid, now, repository }) {
       stageIndex: cycle.cycleIndex,
       startLocalDate: cycleStartLocalDate(cycle),
       days: checkins.length,
+      backfillDays: checkins.filter((checkin) => isBackfill(checkin)).length,
       dailySalary: calculation.dailySalary,
       suggestedAmount: calculation.amount
     },
+    cumulativeWorkDays: settlementRecords.reduce((sum, item) => sum + Number(item.days || 0), 0) + checkins.length,
     pendingSettlement: pendingSettlement ? publicSettlementRequest(pendingSettlement) : null,
+    backfill: buildBackfillState({
+      stage: cycle,
+      checkins,
+      today: localDate,
+      pending: Boolean(pendingSettlement)
+    }),
     settlementSummary: summarizeSettlements(settlementRecords),
     progress: {
       checkinDays: checkins.length,
@@ -389,6 +430,8 @@ async function getCurrentState({ openid, now, repository }) {
     reminder: buildReminder(checkins.length, contract.targetDays),
     canCheckin,
     settledCheckinDates,
+    calendarCheckins: checkins.map(publicCalendarCheckin),
+    settledCalendarCheckins,
     checkins: checkins.slice().reverse().map(publicCheckin),
     recentCheckins: checkins.slice(-30).reverse().map(publicCheckin),
     nextAction: 'viewStage'
@@ -477,7 +520,10 @@ async function submitCheckin({ payload, openid, now, repository }) {
     longitude: Number(payload.longitude),
     accuracy: Number(payload.accuracy),
     distanceMeters: evaluation.distanceMeters,
-    serverTime: now.toISOString()
+    serverTime: now.toISOString(),
+    source: 'employee_checkin',
+    workTime: shanghaiClockTime(now),
+    reason: null
   };
   await normalizeRepositoryError(() => repository.completeCheckin(challenge, checkin));
   await repository.insertAttempt({
@@ -497,6 +543,99 @@ async function submitCheckin({ payload, openid, now, repository }) {
   return { checkin };
 }
 
+async function createBackfillCheckins({ payload, openid, now, repository }) {
+  const user = await requireRole(repository, openid, 'employer');
+  const contract = await repository.findActiveContractByParticipant(user.openid);
+  if (!contract || contract.employerOpenid !== user.openid) {
+    throw new BusinessError('CONTRACT_NOT_FOUND', '未找到合作');
+  }
+  if (!contract.employeeOpenid) throw new BusinessError('CONTRACT_NOT_BOUND', '阿姨还未加入合同');
+  const pendingSettlement = await repository.findPendingSettlementRequest(contract._id);
+  if (pendingSettlement) {
+    throw new BusinessError('SETTLEMENT_PENDING', '请先处理待确认的结算');
+  }
+  const stage = await repository.findOpenCycle(contract._id);
+  if (!stage) throw new BusinessError('NO_OPEN_STAGE', '当前合作没有进行中的一期');
+
+  const localDates = normalizeBackfillDates(payload.localDates);
+  const workTime = normalizeBackfillWorkTime(payload.workTime || '09:00');
+  const reason = normalizeBackfillReason(payload.reason || '前期补录');
+  const today = toShanghaiLocalDate(now);
+  const earliest = String(addLocalDays(today, -30)).localeCompare(cycleStartLocalDate(stage)) > 0
+    ? addLocalDays(today, -30)
+    : cycleStartLocalDate(stage);
+
+  localDates.forEach((localDate) => {
+    if (localDate >= today) {
+      throw new BusinessError('BACKFILL_DATE_NOT_BEFORE_TODAY', '补录日期必须早于今天');
+    }
+    if (localDate < earliest) {
+      throw new BusinessError('BACKFILL_DATE_OUT_OF_RANGE', '只能补最近30天且本期开始后的日期');
+    }
+  });
+
+  for (const localDate of localDates) {
+    if (typeof repository.getContractCheckin === 'function') {
+      const existing = await repository.getContractCheckin(contract._id, localDate);
+      if (existing) throw new BusinessError('CHECKIN_ALREADY_EXISTS', '该日期已有打卡记录');
+    }
+  }
+
+  const checkins = localDates.map((localDate) => ({
+    _id: `${stage._id}:${localDate}`,
+    cycleId: stage._id,
+    contractId: contract._id,
+    employeeOpenid: contract.employeeOpenid,
+    localDate,
+    latitude: null,
+    longitude: null,
+    accuracy: null,
+    distanceMeters: null,
+    serverTime: now.toISOString(),
+    source: 'employer_backfill',
+    workTime,
+    backfillReason: reason,
+    createdByOpenid: openid,
+    createdByRole: 'employer',
+    createdAt: now.toISOString()
+  }));
+  await normalizeRepositoryError(() => repository.insertBackfillCheckins({
+    contractId: contract._id,
+    stageId: stage._id,
+    checkins
+  }));
+  return { checkins: checkins.map(publicCheckin) };
+}
+
+function normalizeBackfillDates(value) {
+  if (!Array.isArray(value) || value.length < 1) {
+    throw new BusinessError('BACKFILL_DATES_REQUIRED', '请选择需要补录的日期');
+  }
+  if (value.length > 30) throw new BusinessError('BACKFILL_DATE_LIMIT', '一次最多补录30天');
+  const dates = [...new Set(value.map((item) => String(item)))].sort((left, right) => left.localeCompare(right));
+  dates.forEach((localDate) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(localDate) || Number.isNaN(Date.parse(`${localDate}T00:00:00+08:00`))) {
+      throw new BusinessError('INVALID_BACKFILL_DATE', '补录日期无效');
+    }
+  });
+  return dates;
+}
+
+function normalizeBackfillWorkTime(value) {
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) {
+    throw new BusinessError('INVALID_BACKFILL_TIME', '补录时间无效');
+  }
+  return value;
+}
+
+function normalizeBackfillReason(value) {
+  const reason = String(value || '').trim();
+  if (!reason || reason.length > 120) {
+    throw new BusinessError('INVALID_BACKFILL_REASON', '请填写补录原因');
+  }
+  return reason;
+}
+
 async function createSettlementRequest({ payload, openid, now, repository }) {
   const user = await requireRole(repository, openid, 'employer');
   const contract = await repository.findActiveContractByParticipant(user.openid);
@@ -514,17 +653,12 @@ async function createSettlementRequest({ payload, openid, now, repository }) {
   if (!stage) throw new BusinessError('NO_OPEN_STAGE', '没有可结算的一期');
 
   const localDate = toShanghaiLocalDate(now);
-  const todayCheckin = await repository.getContractCheckin(contract._id, localDate);
-  if (todayCheckin) {
-    throw new BusinessError('TODAY_ALREADY_CHECKED_IN', '今天已有打卡记录，结算日当天不计入，请明天再结算');
-  }
-
-  const workEndLocalDate = addLocalDays(localDate, -1);
-  const checkins = (await repository.listCheckins(stage._id))
-    .filter((checkin) => checkin.localDate <= workEndLocalDate);
+  const checkins = await repository.listCheckins(stage._id);
   if (checkins.length < 1) {
     throw new BusinessError('NO_CHECKINS_TO_SETTLE', '这一期还没有打卡记录，暂不需要结算');
   }
+  const workEndLocalDate = checkins[checkins.length - 1].localDate;
+  const nextStageStartLocalDate = addLocalDays(workEndLocalDate, 1);
   const calculation = calculateSettlement({
     totalAmount: contract.totalAmount,
     targetDays: contract.targetDays,
@@ -557,8 +691,10 @@ async function createSettlementRequest({ payload, openid, now, repository }) {
     employeeOpenid: contract.employeeOpenid,
     stageStartLocalDate: cycleStartLocalDate(stage),
     workEndLocalDate,
+    nextStageStartLocalDate,
     settledOnLocalDate: localDate,
     days: checkins.length,
+    averageArrivalTime: averageArrivalTime(checkins),
     settledCheckinDates: checkins.map((checkin) => checkin.localDate),
     totalAmount: Number(contract.totalAmount),
     targetDays: Number(contract.targetDays),
@@ -597,7 +733,6 @@ async function confirmSettlementRequest({ openid, now, repository }) {
   }
 
   const confirmedAt = now.toISOString();
-  const confirmLocalDate = toShanghaiLocalDate(now);
   const settlement = {
     _id: `settlement_${request.stageId}`,
     settlementRequestId: request._id,
@@ -607,7 +742,7 @@ async function confirmSettlementRequest({ openid, now, repository }) {
     stageStartLocalDate: request.stageStartLocalDate,
     workEndLocalDate: request.workEndLocalDate,
     settledOnLocalDate: request.settledOnLocalDate,
-    nextStageStartLocalDate: confirmLocalDate,
+    nextStageStartLocalDate: request.nextStageStartLocalDate,
     days: request.days,
     settledCheckinDates: request.settledCheckinDates,
     totalAmount: request.totalAmount,
@@ -617,6 +752,7 @@ async function confirmSettlementRequest({ openid, now, repository }) {
     paidAmount: request.paidAmount,
     differenceAmount: request.differenceAmount,
     differenceReason: request.differenceReason,
+    averageArrivalTime: request.averageArrivalTime,
     transferProofs: request.transferProofs,
     status: 'confirmed',
     settledByEmployerOpenid: contract.employerOpenid,
@@ -640,7 +776,7 @@ async function confirmSettlementRequest({ openid, now, repository }) {
     cycleIndex: stage.cycleIndex + 1,
     status: 'open',
     startedAt: now.toISOString(),
-    startLocalDate: confirmLocalDate,
+    startLocalDate: request.nextStageStartLocalDate,
     settledAt: null,
     settledDays: null,
     settledAmount: null
@@ -653,7 +789,7 @@ async function confirmSettlementRequest({ openid, now, repository }) {
       nextStage
     })
   );
-  return { settlement, nextStage };
+  return { settlement: publicSettlement(settlement), nextStage };
 }
 
 async function disputeSettlementRequest({ payload, openid, now, repository }) {
@@ -692,22 +828,76 @@ async function cancelSettlementRequest({ openid, now, repository }) {
 
 async function listHistory({ openid, repository }) {
   const user = await requireUser(repository, openid);
-  const contract = await repository.findActiveContractByParticipant(openid);
-  if (!contract) {
+  const contracts = await repository.listContractsForParticipant(openid);
+  if (contracts.length === 0) {
     return {
       user: publicUser(user),
       contract: null,
+      contracts: [],
       summary: { settledStages: 0, totalPaidAmount: 0, totalSettledDays: 0 },
       settlements: []
     };
   }
-  const settlements = await repository.listSettlements(contract._id);
+  const contractSummaries = [];
+  for (const item of contracts) {
+    const settlements = await repository.listSettlements(item._id);
+    contractSummaries.push({
+      contract: publicContract(item),
+      summary: summarizeSettlements(settlements),
+      settlements: settlements.map(publicSettlement)
+    });
+  }
+  const selected = contractSummaries[0];
   return {
     user: publicUser(user),
-    contract: publicContract(contract),
-    summary: summarizeSettlements(settlements),
-    settlements
+    contract: selected.contract,
+    contracts: contractSummaries,
+    selectedContractId: selected.contract._id,
+    summary: selected.summary,
+    settlements: selected.settlements
   };
+}
+
+async function terminateContract({ payload, openid, now, repository }) {
+  const user = await requireRole(repository, openid, 'employer');
+  const contract = await repository.findActiveContractByParticipant(user.openid);
+  if (!contract || contract.employerOpenid !== user.openid) {
+    throw new BusinessError('CONTRACT_NOT_FOUND', '未找到合作');
+  }
+  if (!contract.employeeOpenid) throw new BusinessError('CONTRACT_NOT_BOUND', '阿姨还未加入合同');
+  const pendingSettlement = await repository.findPendingSettlementRequest(contract._id);
+  if (pendingSettlement) {
+    throw new BusinessError('SETTLEMENT_PENDING', '请先处理待确认的结算');
+  }
+  const stage = await repository.findOpenCycle(contract._id);
+  if (!stage) throw new BusinessError('NO_OPEN_STAGE', '当前合作没有进行中的一期');
+  const checkins = await repository.listCheckins(stage._id);
+  if (checkins.length > 0) {
+    throw new BusinessError('SETTLE_BEFORE_TERMINATION', '这一期还有未结算天数，请先结算');
+  }
+  const reason = typeof payload.reason === 'string' ? payload.reason.trim() : '';
+  if (!reason || reason.length > 120) {
+    throw new BusinessError('INVALID_TERMINATION_REASON', '请填写终止原因');
+  }
+  const endedAt = now.toISOString();
+  const result = await normalizeRepositoryError(() => repository.terminateContract({
+    contractId: contract._id,
+    stageId: stage._id,
+    contractPatch: {
+      status: 'ended',
+      endedAt,
+      endedReason: reason,
+      endedByOpenid: openid,
+      endedStageIndex: stage.cycleIndex
+    },
+    cyclePatch: {
+      status: 'ended',
+      endedAt
+    },
+    employerOpenid: contract.employerOpenid,
+    employeeOpenid: contract.employeeOpenid
+  }));
+  return { contract: publicContract(result.contract), stage: result.stage };
 }
 
 async function requireCheckinContext({ openid, now, repository }) {
@@ -743,8 +933,14 @@ async function recordFailure({ repository, context, payload, now, challenge, rea
 }
 
 function publicContract(contract) {
+  const {
+    employerOpenid,
+    employeeOpenid,
+    ...safeContract
+  } = contract;
   return {
-    ...contract,
+    ...safeContract,
+    employeeBound: Boolean(employeeOpenid),
     totalAmount: Number(contract.totalAmount),
     targetDays: Number(contract.targetDays),
     radiusMeters: Number(contract.radiusMeters)
@@ -760,6 +956,53 @@ function addLocalDays(localDate, days) {
   const date = new Date(`${localDate}T00:00:00+08:00`);
   date.setUTCDate(date.getUTCDate() + days);
   return toShanghaiLocalDate(date);
+}
+
+function shanghaiClockTime(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const shanghaiDate = new Date(date.getTime() + 8 * 60 * 60 * 1000);
+  return `${String(shanghaiDate.getUTCHours()).padStart(2, '0')}:${String(shanghaiDate.getUTCMinutes()).padStart(2, '0')}`;
+}
+
+function isBackfill(checkin) {
+  return checkin.source === 'employer_backfill';
+}
+
+function averageArrivalTime(checkins) {
+  const actualCheckins = (checkins || []).filter((checkin) => !isBackfill(checkin));
+  if (actualCheckins.length === 0) return null;
+  const minutes = actualCheckins.map((checkin) => {
+    const value = checkin.workTime || shanghaiClockTime(checkin.serverTime);
+    const [hour, minute] = String(value).split(':').map(Number);
+    return hour * 60 + minute;
+  });
+  const average = Math.round(minutes.reduce((sum, item) => sum + item, 0) / minutes.length);
+  return `${String(Math.floor(average / 60)).padStart(2, '0')}:${String(average % 60).padStart(2, '0')}`;
+}
+
+function buildBackfillState({ stage, checkins, today, pending }) {
+  const stageStart = cycleStartLocalDate(stage);
+  const rollingStart = addLocalDays(today, -30);
+  const earliest = rollingStart > stageStart ? rollingStart : stageStart;
+  const latest = addLocalDays(today, -1);
+  const existing = new Set(checkins.map((checkin) => checkin.localDate));
+  const eligibleLocalDates = [];
+  if (!pending && latest >= earliest) {
+    let cursor = earliest;
+    while (cursor <= latest) {
+      if (!existing.has(cursor)) eligibleLocalDates.push(cursor);
+      cursor = addLocalDays(cursor, 1);
+    }
+  }
+  return {
+    earliestLocalDate: earliest,
+    latestLocalDate: latest,
+    eligibleLocalDates,
+    defaultWorkTime: '09:00',
+    defaultReason: '前期补录',
+    canBackfill: !pending
+  };
 }
 
 function normalizeTransferProofs(value, { requireCloudFileId } = {}) {
@@ -781,7 +1024,21 @@ function normalizeTransferProofs(value, { requireCloudFileId } = {}) {
 }
 
 function publicSettlementRequest(request) {
-  return { ...request };
+  const {
+    employerOpenid,
+    employeeOpenid,
+    ...safeRequest
+  } = request;
+  return safeRequest;
+}
+
+function publicSettlement(settlement) {
+  const {
+    settledByEmployerOpenid,
+    confirmedByEmployeeOpenid,
+    ...safeSettlement
+  } = settlement;
+  return safeSettlement;
 }
 
 function summarizeSettlements(settlements) {
@@ -835,7 +1092,10 @@ async function normalizeRepositoryError(fn) {
       error.code === 'EMPLOYEE_ALREADY_JOINED' ||
       error.code === 'FORBIDDEN' ||
       error.code === 'INVITE_NOT_FOUND' ||
-      error.code === 'NO_OPEN_CYCLE'
+      error.code === 'NO_OPEN_CYCLE' ||
+      error.code === 'CONTRACT_NOT_BOUND' ||
+      error.code === 'CHECKIN_ALREADY_EXISTS' ||
+      error.code === 'NO_OPEN_STAGE'
     ) {
       throw new BusinessError(error.code, repositoryMessage(error.code));
     }
@@ -854,7 +1114,10 @@ function repositoryMessage(code) {
     EMPLOYEE_ALREADY_JOINED: '你已加入合作',
     FORBIDDEN: '当前角色无权执行此操作',
     INVITE_NOT_FOUND: '匹配码不存在',
-    NO_OPEN_CYCLE: '当前合作没有进行中的一期'
+    NO_OPEN_CYCLE: '当前合作没有进行中的一期',
+    CONTRACT_NOT_BOUND: '阿姨还未加入合作',
+    CHECKIN_ALREADY_EXISTS: '该日期已有打卡记录',
+    NO_OPEN_STAGE: '当前合作没有进行中的一期'
   };
   return messages[code] || '数据写入失败，请重试';
 }

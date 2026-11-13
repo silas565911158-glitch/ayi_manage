@@ -6,7 +6,9 @@
     "pages/employer/waiting/index",
     "pages/employee/join/index",
     "pages/history/index",
-    "pages/settlement/index"
+    "pages/settlement/index",
+    "pages/backfill/index",
+    "pages/termination/index"
   ],
   "window": {
     "navigationBarBackgroundColor": "#F7F1E8",
@@ -29,7 +31,7 @@
   "tabBar": {
     "custom": true,
     "color": "#756E63",
-    "selectedColor": "#C9402A",
+    "selectedColor": "#22262D",
     "backgroundColor": "#FFFFFF",
     "borderStyle": "black",
     "list": [

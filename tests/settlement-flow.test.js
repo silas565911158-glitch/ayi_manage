@@ -28,7 +28,7 @@ describe('two-party settlement flow', () => {
     expect(request.data.settlementRequest).toMatchObject({
       status: 'pending_employee',
       stageStartLocalDate: '2026-11-22',
-      workEndLocalDate: '2026-12-10',
+      workEndLocalDate: '2026-12-07',
       days: 16,
       totalAmount: 8000,
       targetDays: 26,
@@ -58,7 +58,7 @@ describe('two-party settlement flow', () => {
     });
     expect(confirmed.data.nextStage).toMatchObject({
       stageIndex: 2,
-      startLocalDate: '2026-12-11',
+      startLocalDate: '2026-12-08',
       status: 'open'
     });
 
@@ -71,7 +71,7 @@ describe('two-party settlement flow', () => {
     expect(afterReopen.data.currentStage).toMatchObject({ stageIndex: 2, days: 1 });
   });
 
-  test('requires a proof image, a difference reason, and blocks requests after today’s check-in', async () => {
+  test('requires a proof image, a difference reason, and settles through today’s check-in', async () => {
     let now = new Date('2026-12-10T01:00:00.000Z');
     const backend = new MockBackend({ storage: new MemoryStorage(), now: () => now });
     const employer = backend.as('mock-employer');
@@ -99,10 +99,14 @@ describe('two-party settlement flow', () => {
 
     await employee.call('confirmSettlementRequest');
     await checkIn(employee);
-    await expect(employer.call('createSettlementRequest', {
+    const request = await employer.call('createSettlementRequest', {
       paidAmount: 307.69,
       transferProofs: [{ fileId: 'wxfile://transfer.png' }]
-    })).rejects.toMatchObject({ code: 'TODAY_ALREADY_CHECKED_IN' });
+    });
+    expect(request.data.settlementRequest).toMatchObject({
+      workEndLocalDate: '2026-12-11',
+      nextStageStartLocalDate: '2026-12-12'
+    });
   });
 
   test('rejects more than three proofs and invalid cloud file IDs', async () => {

@@ -19,6 +19,26 @@ Page({
 
   onShow() {
     this.refresh();
+    this.startPolling();
+  },
+
+  onHide() {
+    this.stopPolling();
+  },
+
+  onUnload() {
+    this.stopPolling();
+  },
+
+  startPolling() {
+    if (this.pollTimer) return;
+    this.pollTimer = setInterval(() => this.refresh(), 5000);
+  },
+
+  stopPolling() {
+    if (!this.pollTimer) return;
+    clearInterval(this.pollTimer);
+    this.pollTimer = null;
   },
 
   refresh() {
@@ -31,6 +51,11 @@ Page({
       }
       if (!state.contract) {
         wx.redirectTo({ url: '/pages/employer/create/index' });
+        return;
+      }
+      if (state.contract.employeeBound) {
+        this.stopPolling();
+        wx.switchTab({ url: '/pages/current/index' });
         return;
       }
       this.setData({

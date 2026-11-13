@@ -77,7 +77,7 @@ describe('mini program services', () => {
     expect(days.find((day) => day.date === '2026-12-01')).toMatchObject({
       day: 1,
       checkedIn: true,
-      markText: '✓',
+      markText: '',
       withinStage: true,
       future: false,
       today: false
@@ -117,7 +117,40 @@ describe('mini program services', () => {
     expect(days.find((day) => day.date === '2026-11-11')).toMatchObject({
       settled: false,
       checkedIn: true,
-      markText: '✓'
+      markText: ''
+    });
+  });
+
+  test('builds calendar day records with arrival times for current and settled stages', () => {
+    const { buildCalendarMonth } = require('../miniprogram/services/calendar-state');
+    const month = buildCalendarMonth({
+      year: 2026,
+      month: 11,
+      startLocalDate: '2026-11-10',
+      today: '2026-11-13',
+      checkinRecords: [
+        { localDate: '2026-11-11', time: '08:31', source: 'employee_checkin' },
+        { localDate: '2026-11-12', time: '09:00', source: 'employer_backfill' }
+      ],
+      settledRecords: [
+        { localDate: '2026-11-03', time: '08:12', source: 'employee_checkin' }
+      ]
+    });
+    const days = month.weeks.flat();
+    expect(days.find((day) => day.date === '2026-11-11')).toMatchObject({
+      checkedIn: true,
+      settled: false,
+      timeText: '08:31'
+    });
+    expect(days.find((day) => day.date === '2026-11-12')).toMatchObject({
+      checkedIn: true,
+      timeText: '09:00',
+      source: 'employer_backfill'
+    });
+    expect(days.find((day) => day.date === '2026-11-03')).toMatchObject({
+      settled: true,
+      checkedIn: false,
+      timeText: '08:12'
     });
   });
 
@@ -141,6 +174,43 @@ describe('mini program services', () => {
       year: 2026,
       month: 11
     })).toEqual({ canPrevMonth: false, canNextMonth: true });
+  });
+
+  test('builds a batch backfill board and supports range selection', () => {
+    const {
+      buildBackfillBoard,
+      selectBackfillDate
+    } = require('../miniprogram/services/backfill-state');
+    const board = buildBackfillBoard({
+      earliestLocalDate: '2026-11-01',
+      latestLocalDate: '2026-11-12',
+      eligibleLocalDates: ['2026-11-02', '2026-11-04', '2026-11-05', '2026-11-11'],
+      selectedLocalDates: ['2026-11-04']
+    });
+    expect(board.boards[0]).toMatchObject({ title: '2026年11月' });
+    const days = board.boards[0].weeks.flat();
+    expect(days.find((day) => day.date === '2026-11-01')).toMatchObject({ eligible: false });
+    expect(days.find((day) => day.date === '2026-11-04')).toMatchObject({
+      eligible: true,
+      selected: true
+    });
+    expect(days.find((day) => day.date === '2026-11-05')).toMatchObject({
+      eligible: true,
+      selected: false
+    });
+
+    expect(selectBackfillDate({
+      mode: 'range',
+      date: '2026-11-05',
+      selectedLocalDates: ['2026-11-04'],
+      eligibleLocalDates: ['2026-11-02', '2026-11-04', '2026-11-05', '2026-11-11']
+    })).toEqual(['2026-11-04', '2026-11-05']);
+    expect(selectBackfillDate({
+      mode: 'single',
+      date: '2026-11-04',
+      selectedLocalDates: ['2026-11-04'],
+      eligibleLocalDates: ['2026-11-04']
+    })).toEqual([]);
   });
 
   test('explains settlement calculations in plain language', () => {
@@ -201,6 +271,7 @@ describe('mini program services', () => {
     expect(formatShanghaiDateInput(new Date('2026-11-11T15:59:08.000Z'))).toBe('2026-11-11');
     expect(formatShanghaiDateInput(new Date('2026-11-11T16:00:08.000Z'))).toBe('2026-11-12');
     expect(formatShanghaiClockTime('2026-11-12T06:32:08.000Z')).toBe('14:32');
+    expect(formatShanghaiClockTime('09:00')).toBe('09:00');
   });
 
   test('mock client persists roles and normalized failures through wx storage', async () => {

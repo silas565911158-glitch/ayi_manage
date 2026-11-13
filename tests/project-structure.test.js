@@ -11,7 +11,9 @@ describe('project structure', () => {
       'pages/employer/waiting/index',
       'pages/employee/join/index',
       'pages/history/index',
-      'pages/settlement/index'
+      'pages/settlement/index',
+      'pages/backfill/index',
+      'pages/termination/index'
     ];
     expect(app.pages).toEqual(expectedPages);
     expect(app.pages[0]).toBe('pages/current/index');
@@ -41,7 +43,7 @@ describe('project structure', () => {
     expect(app.tabBar).toMatchObject({
       custom: true,
       color: '#756E63',
-      selectedColor: '#C9402A',
+      selectedColor: '#22262D',
       backgroundColor: '#FFFFFF',
       borderStyle: 'black'
     });
@@ -62,7 +64,7 @@ describe('project structure', () => {
     expect(tabBarWxss).toContain('bottom: 0');
     expect(tabBarWxss).toContain('box-sizing: border-box');
     expect(tabBarWxss).toContain('padding-bottom: env(safe-area-inset-bottom)');
-    expect(tabBarWxss).toContain('height: 112rpx');
+    expect(tabBarWxss).toContain('height: 96rpx');
     expect(tabBarWxss).toContain('width: 100%');
   });
 
@@ -139,7 +141,9 @@ describe('project structure', () => {
     expect(currentWxml).toContain('bottom-action-bar');
     expect(currentWxml).toContain('wx:if="{{role === \'employee\'}}"');
     expect(currentWxml).toContain('wx:elif="{{role === \'employer\'}}"');
-    expect(currentWxml).toContain('结算这一期');
+    expect(currentWxml).toContain("bindtap=\"goSettlement\"");
+    expect(currentWxml).toContain("bindtap=\"goBackfill\"");
+    expect(currentWxml).toContain("bindtap=\"goTermination\"");
     expect(currentWxml).toContain('bottom-settlement-button');
     expect(currentWxml).toContain('bindtap="confirmSettlement"');
     expect(currentWxml).toContain('bottomCheckinText');
@@ -157,6 +161,7 @@ describe('project structure', () => {
     expect(currentWxml).not.toContain('flat-action-button');
     expect(currentWxml).toContain('{{totalPaidCompactText}}');
     expect(currentWxml).toContain('累计支付{{state.settlementSummary.settledStages}}期');
+    expect(currentWxml).toContain('cumulativeWorkText');
     expect(currentWxml).not.toContain('quick-links');
     expect(currentWxml).toContain('auxiliary-panel');
     expect(currentWxml).not.toContain('checkin-section');
@@ -200,7 +205,8 @@ describe('project structure', () => {
     expect(currentWxml.indexOf('calendar-month'))
       .toBeLessThan(currentWxml.indexOf('calendar-arrow-next'));
     expect(currentWxss).not.toContain('min-height: 620rpx');
-    expect(currentWxml).toContain('day-mark');
+    expect(currentWxml).toContain('day-dot');
+    expect(currentWxml).toContain('day-time');
     expect(currentWxml).toContain("day.settled ? 'settled' : ''");
     expect(currentWxml).toContain("day.withinStage ? '' : 'outside'");
     expect(currentWxml).not.toContain('legend-item');
@@ -218,9 +224,37 @@ describe('project structure', () => {
     expect(settlementJs).not.toContain('wx.chooseImage');
     expect(settlementJs).toContain('wx.showModal');
     expect(settlementJs).toContain('confirmSettlement');
-    expect(historyWxml).toContain('按合同计算');
+    expect(historyWxml).toContain('合同信息');
+    expect(historyWxml).toContain('平均到岗');
+    expect(historyWxml).toContain('contract-tabs');
     expect(historyWxml).toContain('累计干了');
     expect(historyJs).toContain('USER_NOT_FOUND');
+    expect(historyWxml).toContain('结算工资');
+    expect(historyWxml).toContain('bindtap="toggleContract"');
+  });
+
+  test('provides employer backfill and termination safety flows', () => {
+    const read = (page, extension) =>
+      fs.readFileSync(path.join(__dirname, '..', 'miniprogram', `pages/${page}${extension}`), 'utf8');
+    const backfillWxml = read('backfill/index', '.wxml');
+    const backfillJs = read('backfill/index', '.js');
+    const terminationWxml = read('termination/index', '.wxml');
+    const terminationJs = read('termination/index', '.js');
+
+    expect(backfillWxml).toContain('最近30天');
+    expect(backfillWxml).toContain('连续日期');
+    expect(backfillWxml).toContain('单日修改');
+    expect(backfillJs).toContain("'前期补录'");
+    expect(backfillWxml).toContain('bindtap="selectDay"');
+    expect(backfillJs).toContain('createBackfillCheckins');
+    expect(backfillJs).toContain("workTime: '09:00'");
+
+    expect(terminationWxml).toContain('终止后将发生什么');
+    expect(terminationWxml).toContain('当前状态');
+    expect(terminationWxml).toContain('终止原因');
+    expect(terminationWxml).toContain('确认终止合同');
+    expect(terminationJs).toContain('terminateContract');
+    expect(terminationJs).toContain('这一期还有未结算天数');
   });
 
   test('keeps the first-run matching flow consistent and in plain language', () => {
@@ -285,6 +319,9 @@ describe('project structure', () => {
     expect(waitingWxml).toContain('重新选择身份');
     expect(waitingJs).toContain('resetUnmatchedCooperation');
     expect(waitingJs).toContain('switchMockEmployee');
+    expect(waitingJs).toContain('startPolling');
+    expect(waitingJs).toContain('stopPolling');
+    expect(waitingJs).toContain('5000');
     expect(waitingJs).toContain('/pages/onboarding/index?reselect=1');
     expect(joinWxml).toContain('重新选择身份');
     expect(joinWxml).toContain('<button');
@@ -312,7 +349,9 @@ describe('project structure', () => {
       'pages/employee/join/index',
       'pages/current/index',
       'pages/history/index',
-      'pages/settlement/index'
+      'pages/settlement/index',
+      'pages/backfill/index',
+      'pages/termination/index'
     ];
     for (const page of pages) {
       expect(() => require(`../miniprogram/${page}`)).not.toThrow();

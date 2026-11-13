@@ -1,12 +1,16 @@
 'use strict';
 
 const { api } = require('../../services/api');
-const { buildSettlementExplanation } = require('../../services/view-state');
+const {
+  buildSettlementExplanation,
+  formatCompactDateWithYear
+} = require('../../services/view-state');
 
 Page({
   data: {
     state: null,
     workRangeText: '',
+    workEndText: '',
     today: '',
     dailySalaryText: '',
     suggestedText: '',
@@ -26,7 +30,11 @@ Page({
     api.call('getCurrentState').then((result) => {
       if (!result.ok) throw new Error(result.message);
       const state = result.data;
-      const workEnd = shiftLocalDate(state.today.localDate, -1);
+      const checkins = state.calendarCheckins || [];
+      const workEnd = checkins.length > 0
+        ? checkins[checkins.length - 1].localDate
+        : state.today.localDate;
+      const nextStageStart = shiftLocalDate(workEnd, 1);
       const calculation = buildSettlementExplanation({
         totalAmount: state.contract.totalAmount,
         targetDays: state.contract.targetDays,
@@ -38,12 +46,14 @@ Page({
       const viewModel = {
         state,
         today: state.today.localDate,
-        workRangeText: `${state.currentStage.startLocalDate} 至 ${workEnd}`,
+        workRangeText: `${formatCompactDateWithYear(state.currentStage.startLocalDate)} 至 ${formatCompactDateWithYear(workEnd)}`,
+        workEndText: formatCompactDateWithYear(workEnd),
+        nextStageStart: formatCompactDateWithYear(nextStageStart),
         dailySalaryText: calculation.dailySalaryText,
         suggestedText: calculation.suggestedText,
         calculation,
         paidAmount: String(state.currentStage.suggestedAmount || 0),
-        error: state.today.checkedIn ? '今天已有打卡记录，明天可以结算。' : ''
+        error: ''
       };
       this.setData(viewModel);
     }).catch((error) => {
@@ -88,10 +98,6 @@ Page({
 
   submit() {
     if (this.data.submitting) return;
-    if (this.data.state && this.data.state.today.checkedIn) {
-      this.setData({ error: '今天已有打卡记录，明天可以结算。' });
-      return;
-    }
     const paid = Number(this.data.paidAmount);
     if (!Number.isFinite(paid) || paid < 0 || paid > 1000000) {
       this.setData({ error: '请输入正确的实付金额。' });

@@ -2,11 +2,11 @@
   <view wx:if="{{loading}}" class="quiet">正在读取……</view>
 
   <block wx:elif="{{state}}">
-    <view class="flow-title">{{state.contract.employeeOpenid ? '匹配成功' : '等待阿姨接受'}}</view>
-    <text class="flow-lead">{{state.contract.employeeOpenid ? '双方已建立合作，可以进入当期记工。' : '把匹配码发给阿姨；她确认合作信息后，双方会自动匹配。'}}</text>
+    <view class="flow-title">{{state.contract.employeeBound ? '匹配成功' : '等待阿姨接受'}}</view>
+    <text class="flow-lead">{{state.contract.employeeBound ? '双方已建立合作，可以进入当期记工。' : '把匹配码发给阿姨；她确认合作信息后，双方会自动匹配。'}}</text>
 
     <view class="flow-card">
-      <block wx:if="{{!state.contract.employeeOpenid}}">
+      <block wx:if="{{!state.contract.employeeBound}}">
         <view class="invite-label">8 位匹配码</view>
         <view class="invite-code">{{state.contract.inviteCode || '已过期'}}</view>
         <view class="expire">有效期至 {{expiresText}}</view>
@@ -33,7 +33,7 @@
         <text>{{state.contract.radiusMeters}} 米</text>
       </view>
 
-      <block wx:if="{{!state.contract.employeeOpenid}}">
+      <block wx:if="{{!state.contract.employeeBound}}">
         <button class="button-primary" hover-class="button-hover" bindtap="copyInvite" disabled="{{!state.contract.inviteCode}}">复制匹配码</button>
             <button wx:if="{{isMock}}" class="button-primary employee-button" hover-class="button-hover" bindtap="switchMockEmployee" disabled="{{working}}">去阿姨端输入匹配码</button>
         <button class="button-plain" hover-class="button-hover" bindtap="regenerate" disabled="{{working}}">重新生成匹配码</button>

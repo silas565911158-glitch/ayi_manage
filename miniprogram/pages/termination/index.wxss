@@ -1,0 +1,11 @@
+.termination-page { padding-bottom: calc(72rpx + env(safe-area-inset-bottom)); }
+.termination-page .flow-title { margin-top: 0; }
+.section-title { margin-bottom: 14rpx; color: #22262D; font-size: 34rpx; font-weight: 700; }
+.fact-list { color: #555047; font-size: 30rpx; line-height: 56rpx; }
+.summary-row { display: flex; justify-content: space-between; gap: 30rpx; padding: 10rpx 0; color: #555047; font-size: 30rpx; }
+.summary-row text:last-child { max-width: 430rpx; color: #22262D; font-weight: 600; text-align: right; }
+.reason-list { display: flex; flex-wrap: wrap; gap: 12rpx; }
+.reason-chip { display: inline-flex; align-items: center; justify-content: center; min-height: 80rpx; margin: 0; padding: 0 24rpx; border: 2rpx solid #E4D8C7; border-radius: 999rpx; background: #FFFFFF; color: #555047; font-size: 30rpx; font-weight: 600; line-height: 80rpx; }
+.reason-chip.selected { border-color: #C9402A; background: #FFF0EB; color: #8E2B1A; font-weight: 700; }
+.other-input { box-sizing: border-box; width: 100%; min-height: 112rpx; margin-top: 18rpx; padding: 18rpx 20rpx; border: 2rpx solid #D9CBB6; border-radius: 14rpx; background: #FFFFFF; color: #22262D; font-size: 30rpx; }
+.termination-button { width: 100%; margin-top: 26rpx; }

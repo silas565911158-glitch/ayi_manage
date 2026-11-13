@@ -42,7 +42,7 @@ Page({
         wx.redirectTo({ url: '/pages/employer/create/index' });
         return;
       }
-      if (contract.employeeOpenid) {
+      if (contract.employeeBound) {
         wx.switchTab({ url: '/pages/current/index' });
         return;
       }

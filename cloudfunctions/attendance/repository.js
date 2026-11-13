@@ -36,6 +36,20 @@ class CloudDatabaseRepository {
     );
   }
 
+  async listContractsForParticipant(openid) {
+    const [asEmployer, asEmployee] = await Promise.all([
+      this.collection('contracts').where({ employerOpenid: openid }).limit(100).get(),
+      this.collection('contracts').where({ employeeOpenid: openid }).limit(100).get()
+    ]);
+    const unique = new Map();
+    [...asEmployer.data, ...asEmployee.data].forEach((contract) => unique.set(contract._id, contract));
+    return Array.from(unique.values()).sort((left, right) => {
+      if (left.status === 'active') return -1;
+      if (right.status === 'active') return 1;
+      return new Date(right.endedAt || right.createdAt || 0) - new Date(left.endedAt || left.createdAt || 0);
+    });
+  }
+
   async findContractByInviteCode(inviteCode) {
     return this.first('contracts', { inviteCode, status: 'active' });
   }
@@ -216,6 +230,15 @@ class CloudDatabaseRepository {
     return result.data;
   }
 
+  async listCheckinsByContract(contractId) {
+    const result = await this.collection('checkins')
+      .where({ contractId })
+      .orderBy('localDate', 'asc')
+      .limit(1000)
+      .get();
+    return result.data;
+  }
+
   async getCheckin(cycleId, localDate) {
     return this.first('checkins', { cycleId, localDate });
   }
@@ -227,6 +250,34 @@ class CloudDatabaseRepository {
   async insertCheckin(checkin) {
     await this.collection('checkins').add({ data: checkin });
     return checkin;
+  }
+
+  async insertBackfillCheckins({ contractId, stageId, checkins }) {
+    const transaction = await this.db.startTransaction();
+    try {
+      const contractDoc = await transaction.collection('contracts').doc(contractId).get();
+      const contract = contractDoc.data;
+      if (!contract || contract.status !== 'active' || !contract.employeeOpenid) {
+        throw createRepositoryError('CONTRACT_NOT_BOUND');
+      }
+      const stageDoc = await transaction.collection('cycles').doc(stageId).get();
+      const stage = stageDoc.data;
+      if (!stage || stage.contractId !== contractId || stage.status !== 'open') {
+        throw createRepositoryError('NO_OPEN_STAGE');
+      }
+      for (const checkin of checkins) {
+        const existing = await transaction.collection('checkins').doc(checkin._id).get();
+        if (existing.data) throw createRepositoryError('CHECKIN_ALREADY_EXISTS');
+      }
+      for (const checkin of checkins) {
+        await transaction.collection('checkins').add({ data: checkin });
+      }
+      await transaction.commit();
+      return checkins;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
   }
 
   async insertAttempt(attempt) {
@@ -365,6 +416,44 @@ class CloudDatabaseRepository {
       await transaction.collection('cycles').add({ data: nextStage });
       await transaction.commit();
       return { settlement, nextStage };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async terminateContract({
+    contractId,
+    stageId,
+    contractPatch,
+    cyclePatch,
+    employerOpenid,
+    employeeOpenid
+  }) {
+    const transaction = await this.db.startTransaction();
+    try {
+      const contractDoc = await transaction.collection('contracts').doc(contractId).get();
+      const contract = contractDoc.data;
+      if (!contract || contract.status !== 'active' || contract.employerOpenid !== employerOpenid) {
+        throw createRepositoryError('CONTRACT_NOT_FOUND');
+      }
+      if (!contract.employeeOpenid || contract.employeeOpenid !== employeeOpenid) {
+        throw createRepositoryError('CONTRACT_NOT_BOUND');
+      }
+      const stageDoc = await transaction.collection('cycles').doc(stageId).get();
+      const stage = stageDoc.data;
+      if (!stage || stage.contractId !== contractId || stage.status !== 'open') {
+        throw createRepositoryError('NO_OPEN_STAGE');
+      }
+      await transaction.collection('contracts').doc(contractId).update({ data: contractPatch });
+      await transaction.collection('cycles').doc(stageId).update({ data: cyclePatch });
+      await transaction.collection('users').doc(employerOpenid).update({ data: { activeContractId: null } });
+      await transaction.collection('users').doc(employeeOpenid).update({ data: { activeContractId: null } });
+      await transaction.commit();
+      return {
+        contract: { ...contract, ...contractPatch },
+        stage: { ...stage, ...cyclePatch }
+      };
     } catch (error) {
       await transaction.rollback();
       throw error;

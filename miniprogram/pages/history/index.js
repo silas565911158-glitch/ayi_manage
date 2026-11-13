@@ -1,12 +1,19 @@
 'use strict';
 
 const { api } = require('../../services/api');
-const { buildSettlementExplanation, formatMoney } = require('../../services/view-state');
+const {
+  formatCompactDateWithYear,
+  formatMoney
+} = require('../../services/view-state');
 
 Page({
   data: {
     loading: true,
     role: 'employee',
+    contractTabs: [],
+    selectedContractId: '',
+    contract: null,
+    showContract: false,
     summary: { settledStages: 0, totalPaidAmount: 0, totalSettledDays: 0 },
     totalPaidText: formatMoney(0),
     totalSettledDaysText: '0',
@@ -17,7 +24,7 @@ Page({
     if (this.getTabBar) {
       this.getTabBar().setData({ selected: 1 });
     }
-    this.setData({ loading: true });
+    this.setData({ loading: true, showContract: false });
     api.call('listHistory').then((result) => {
       if (!result.ok) {
         if (result.code === 'USER_NOT_FOUND') {
@@ -26,35 +33,75 @@ Page({
         }
         throw new Error(result.message);
       }
-      const settlements = (result.data.settlements || []).map((item) => ({
+
+      const contracts = (result.data.contracts || []).map((item, index) => ({
         ...item,
-        dailySalaryText: formatMoney(item.dailySalary),
-        paidText: formatMoney(item.paidAmount),
-        calculation: buildSettlementExplanation({
-          totalAmount: item.totalAmount,
-          targetDays: item.targetDays,
-          days: item.days,
-          dailySalary: item.dailySalary,
-          suggestedAmount: item.suggestedAmount,
-          paidAmount: item.paidAmount
-        })
+        id: item.contract._id,
+        label: item.contract.status === 'active' && index === 0
+          ? '当前合作'
+          : `${String(item.contract.startDate).slice(0, 4)}合作`
       }));
       this.setData({
-            loading: false,
+        loading: false,
         role: result.data.user ? result.data.user.role : this.data.role,
-        summary: result.data.summary,
-        totalPaidText: formatMoney(result.data.summary.totalPaidAmount),
-        totalSettledDaysText: String(result.data.summary.totalSettledDays || 0),
-        settlements
+        contractTabs: contracts,
+        selectedContractId: result.data.selectedContractId || ''
       });
+      this.presentContract(
+        contracts.find((item) => item.id === this.data.selectedContractId) || contracts[0]
+      );
     }).catch((error) => {
-        this.setData({ loading: false });
+      this.setData({ loading: false });
       wx.showToast({ title: error.message || '读取历史失败', icon: 'none' });
     });
   },
 
+  presentContract(contractGroup) {
+    if (!contractGroup) {
+      this.setData({
+        contract: null,
+        summary: { settledStages: 0, totalPaidAmount: 0, totalSettledDays: 0 },
+        totalPaidText: formatMoney(0),
+        totalSettledDaysText: '0',
+        settlements: []
+      });
+      return;
+    }
+    const settlements = contractGroup.settlements.map((item) => ({
+      ...item,
+      stageStartText: formatCompactDateWithYear(item.stageStartLocalDate),
+      workEndText: formatCompactDateWithYear(item.workEndLocalDate),
+      paidText: formatMoney(item.paidAmount),
+      averageArrivalText: item.averageArrivalTime || '--:--'
+    }));
+    this.setData({
+      selectedContractId: contractGroup.id,
+      contract: {
+        ...contractGroup.contract,
+        startText: formatCompactDateWithYear(contractGroup.contract.startDate)
+      },
+      summary: contractGroup.summary,
+      totalPaidText: formatMoney(contractGroup.summary.totalPaidAmount),
+      totalSettledDaysText: String(contractGroup.summary.totalSettledDays || 0),
+      settlements
+    });
+  },
+
+  selectContract(event) {
+    const id = event.currentTarget.dataset.id;
+    const contractGroup = this.data.contractTabs.find((item) => item.id === id);
+    if (!contractGroup || id === this.data.selectedContractId) return;
+    this.setData({ showContract: false });
+    this.presentContract(contractGroup);
+  },
+
+  toggleContract() {
+    this.setData({ showContract: !this.data.showContract });
+  },
+
   previewProof(event) {
-    wx.previewImage({ current: event.currentTarget.dataset.url, urls: this.data.settlements
-      .flatMap((item) => item.transferProofs.map((proof) => proof.temporaryUrl || proof.fileId)) });
+    const urls = this.data.settlements
+      .flatMap((item) => item.transferProofs.map((proof) => proof.temporaryUrl || proof.fileId));
+    wx.previewImage({ current: event.currentTarget.dataset.url, urls });
   }
 });

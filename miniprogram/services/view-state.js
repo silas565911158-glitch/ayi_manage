@@ -71,6 +71,7 @@ function formatCompactDateWithYear(value) {
 
 function formatShanghaiClockTime(value) {
   if (!value) return '--';
+  if (/^([01]\d|2[0-3]):[0-5]\d$/.test(String(value))) return String(value);
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '--';
   const shanghaiDate = new Date(date.getTime() + 8 * 60 * 60 * 1000);

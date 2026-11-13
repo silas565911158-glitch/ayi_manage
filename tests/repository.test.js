@@ -192,6 +192,67 @@ describe('attendance repositories', () => {
     expect(committed).toBe(true);
   });
 
+  test('cloud repository atomically inserts backfills and terminates a bound contract', async () => {
+    const contract = {
+      _id: 'contract_1',
+      status: 'active',
+      employerOpenid: 'employer',
+      employeeOpenid: 'employee'
+    };
+    const stage = { _id: 'stage_1', contractId: 'contract_1', status: 'open' };
+    const additions = [];
+    const updates = [];
+    let committed = false;
+    const transaction = {
+      collection(name) {
+        return {
+          async add({ data }) { additions.push({ name, data }); },
+          doc(id) {
+            return {
+              async get() {
+                if (name === 'contracts') return { data: contract };
+                if (name === 'cycles') return { data: stage };
+                if (name === 'users') return { data: { _id: id, activeContractId: 'contract_1' } };
+                return { data: null };
+              },
+              async update({ data }) { updates.push({ name, id, data }); }
+            };
+          }
+        };
+      },
+      async commit() { committed = true; },
+      async rollback() { committed = false; }
+    };
+    const repository = new CloudDatabaseRepository({ startTransaction: async () => transaction });
+    const checkins = [
+      { _id: 'stage_1:2026-11-04', localDate: '2026-11-04' },
+      { _id: 'stage_1:2026-11-05', localDate: '2026-11-05' }
+    ];
+
+    await repository.insertBackfillCheckins({
+      contractId: 'contract_1',
+      stageId: 'stage_1',
+      checkins
+    });
+    expect(additions.filter((item) => item.name === 'checkins')).toHaveLength(2);
+
+    await repository.terminateContract({
+      contractId: 'contract_1',
+      stageId: 'stage_1',
+      contractPatch: { status: 'ended' },
+      cyclePatch: { status: 'ended' },
+      employerOpenid: 'employer',
+      employeeOpenid: 'employee'
+    });
+    expect(updates).toEqual([
+      { name: 'contracts', id: 'contract_1', data: { status: 'ended' } },
+      { name: 'cycles', id: 'stage_1', data: { status: 'ended' } },
+      { name: 'users', id: 'employer', data: { activeContractId: null } },
+      { name: 'users', id: 'employee', data: { activeContractId: null } }
+    ]);
+    expect(committed).toBe(true);
+  });
+
   test('memory repository enforces one active cooperation per participant', () => {
     const repository = new MemoryRepository(emptyDatabase());
     repository.users.push(

@@ -1,17 +1,34 @@
-.history-page { padding-top: 38rpx; padding-bottom: calc(160rpx + env(safe-area-inset-bottom)); }
-.summary { display: flex; justify-content: space-between; gap: 20rpx; padding-bottom: 28rpx; border-bottom: 3rpx solid #22262D; }
-.summary-label { color: #756E63; font-size: 30rpx; }
-.summary-value { margin-top: 6rpx; color: #22262D; font-size: 40rpx; font-weight: 700; line-height: 1.2; }
-.settlement { margin-top: 30rpx; padding: 28rpx; border-left: 12rpx solid #22262D; border-radius: 16rpx; background: #FFFDFA; }
-.stage { color: #756E63; font-size: 30rpx; font-weight: 700; }
-.range { margin-top: 8rpx; color: #22262D; font-size: 40rpx; font-weight: 700; }
-.facts { display: flex; justify-content: space-between; margin-top: 16rpx; color: #555047; font-size: 30rpx; }
-.calculation { margin-top: 16rpx; padding: 18rpx 20rpx; border-radius: 12rpx; background: #F4EDE1; }
-.calculation-formula { color: #22262D; font-size: 34rpx; font-weight: 700; line-height: 1.35; }
-.calculation-detail { margin-top: 6rpx; color: #555047; font-size: 30rpx; }
-.paid { margin-top: 14rpx; color: #C9402A; font-size: 48rpx; font-weight: 700; }
-.difference { margin-top: 4rpx; color: #8E2B1A; font-size: 26rpx; font-weight: 600; }
-.difference-reason { margin-top: 4rpx; color: #555047; font-size: 30rpx; }
+.history-page { padding-top: 24rpx; padding-bottom: calc(160rpx + env(safe-area-inset-bottom)); }
+
+.history-header { padding: 22rpx; border: 2rpx solid #E4D8C7; border-radius: 22rpx; background: #FFFDFA; box-shadow: 0 10rpx 30rpx rgba(34, 38, 45, 0.05); }
+.contract-tabs { width: 100%; height: 72rpx; margin-bottom: 16rpx; white-space: nowrap; }
+.contract-tab-list { display: flex; gap: 12rpx; }
+.contract-tab { display: inline-flex; align-items: center; justify-content: center; height: 72rpx; padding: 0 22rpx; border: 2rpx solid #E4D8C7; border-radius: 999rpx; background: #FFFFFF; color: #756E63; font-size: 26rpx; font-weight: 600; line-height: 72rpx; }
+.contract-tab.active { border-color: #1B7F5C; background: #E4F3ED; color: #146247; font-weight: 700; }
+
+.summary-grid { display: flex; gap: 12rpx; }
+.summary-grid > view { flex: 1; min-width: 0; text-align: center; }
+.summary-label { color: #756E63; font-size: 26rpx; line-height: 34rpx; }
+.summary-value { margin-top: 2rpx; color: #22262D; font-size: 40rpx; font-weight: 700; line-height: 48rpx; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+.contract-toggle { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 88rpx; margin: 18rpx 0 0; border: 2rpx solid #E4D8C7; border-radius: 14rpx; background: #FFFFFF; color: #555047; font-size: 30rpx; font-weight: 600; line-height: 88rpx; }
+.contract-detail { margin-top: 18rpx; padding-top: 18rpx; border-top: 2rpx solid #E4D8C7; }
+.info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18rpx 22rpx; }
+.info-item { min-width: 0; }
+.info-item.wide { grid-column: 1 / -1; }
+.info-label { color: #756E63; font-size: 26rpx; line-height: 34rpx; }
+.info-value { margin-top: 2rpx; color: #22262D; font-size: 30rpx; font-weight: 600; line-height: 40rpx; word-break: break-all; }
+
+.settlement { margin-top: 22rpx; padding: 24rpx; border: 2rpx solid #E4D8C7; border-radius: 22rpx; background: #FFFDFA; box-shadow: 0 10rpx 30rpx rgba(34, 38, 45, 0.05); }
+.record-main { display: flex; align-items: flex-start; justify-content: space-between; gap: 20rpx; }
+.stage { color: #22262D; font-size: 34rpx; font-weight: 700; line-height: 42rpx; }
+.range { margin-top: 3rpx; color: #555047; font-size: 26rpx; font-weight: 600; line-height: 34rpx; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.amount { min-width: 0; text-align: right; }
+.amount-value { color: #C9402A; font-size: 40rpx; font-weight: 700; line-height: 48rpx; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.amount-label { margin-top: 2rpx; color: #756E63; font-size: 26rpx; line-height: 34rpx; }
+.facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14rpx; margin-top: 22rpx; padding: 18rpx; border-radius: 14rpx; background: #F4EDE1; }
+.fact-label { color: #555047; font-size: 26rpx; line-height: 34rpx; }
+.fact-value { margin-top: 2rpx; color: #22262D; font-size: 30rpx; font-weight: 700; line-height: 40rpx; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .proofs { display: flex; gap: 14rpx; margin-top: 20rpx; }
-.proofs image { width: 150rpx; height: 150rpx; border-radius: 10rpx; background: #EFE7DA; }
-.empty { margin-top: 80rpx; color: #756E63; text-align: center; }
+.proofs image { width: 150rpx; height: 150rpx; border-radius: 12rpx; background: #EFE7DA; }
+.empty { margin-top: 100rpx; color: #756E63; font-size: 30rpx; text-align: center; }

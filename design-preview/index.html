@@ -1,0 +1,3288 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>上户考勤 v1.1 视觉稿</title>
+  <style>
+    :root {
+      --cream: #f7f1e8;
+      --paper: #fffdf9;
+      --paper-soft: #f4ede1;
+      --line: #e4d8c7;
+      --ink: #22262d;
+      --ink-2: #555047;
+      --ink-3: #6b6459;
+      --green: #1b7f5c;
+      --green-deep: #146247;
+      --green-soft: #e4f3ed;
+      --red: #c9402a;
+      --red-deep: #8e2b1a;
+      --red-soft: #fff0eb;
+      --amber: #8a5a00;
+      --amber-soft: #f6e7c8;
+      --shadow-card: 0 10px 30px rgba(34, 38, 45, .06);
+      --shadow-summary: 0 12px 28px rgba(34, 38, 45, .13);
+      --phone-width: 375px;
+      --phone-height: 812px;
+      --tab-height: 48px;
+      --safe-bottom: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 15% 0%, rgba(27, 127, 92, .10), transparent 34%),
+        radial-gradient(circle at 88% 8%, rgba(201, 64, 42, .08), transparent 32%),
+        var(--cream);
+      color: var(--ink);
+    }
+
+    .studio {
+      padding: 36px 34px 64px;
+    }
+
+    .studio-header {
+      max-width: 1560px;
+      margin: 0 auto 28px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      height: 25px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: #ece1d2;
+      color: #5e574d;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .06em;
+    }
+
+    h1 {
+      margin: 12px 0 0;
+      font-size: 34px;
+      line-height: 1.18;
+      letter-spacing: -.025px;
+    }
+
+    .studio-lead {
+      max-width: 780px;
+      margin: 12px 0 0;
+      color: var(--ink-2);
+      font-size: 15px;
+      line-height: 1.65;
+    }
+
+    .principles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      max-width: 1000px;
+      margin: 20px 0 0;
+    }
+
+    .principle {
+      display: inline-flex;
+      align-items: center;
+      height: 30px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 253, 249, .76);
+      color: var(--ink-2);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .board {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 28px;
+      max-width: 1560px;
+      margin: 0 auto;
+      overflow-x: auto;
+      padding: 4px 2px 28px;
+      scroll-snap-type: x proximity;
+    }
+
+    .screen-card {
+      flex: 0 0 calc(var(--phone-width) + 18px);
+      scroll-snap-align: start;
+    }
+
+    .screen-card.active .phone {
+      outline: 3px solid rgba(27, 127, 92, .32);
+      outline-offset: 5px;
+    }
+
+    .screen-meta {
+      margin-bottom: 12px;
+    }
+
+    .screen-index {
+      color: var(--green-deep);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .10em;
+    }
+
+    .screen-name {
+      margin-top: 4px;
+      font-size: 19px;
+      font-weight: 700;
+    }
+
+    .screen-desc {
+      margin-top: 6px;
+      color: var(--ink-2);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .phone {
+      position: relative;
+      width: calc(var(--phone-width) + 18px);
+      height: calc(var(--phone-height) + 18px);
+      overflow: hidden;
+      border: 9px solid #22262d;
+      border-radius: 46px;
+      background: var(--cream);
+      box-shadow: 0 28px 66px rgba(34, 38, 45, .20);
+    }
+
+    .phone::after {
+      content: "";
+      position: absolute;
+      top: 9px;
+      left: 50%;
+      width: 102px;
+      height: 24px;
+      transform: translateX(-50%);
+      border-radius: 999px;
+      background: #22262d;
+      z-index: 20;
+    }
+
+    .app {
+      display: flex;
+      width: var(--phone-width);
+      height: var(--phone-height);
+      flex-direction: column;
+      padding: 40px 18px 0;
+      background: var(--cream);
+    }
+
+    .app-scroll {
+      display: flex;
+      height: calc(100% - var(--tab-height) - var(--safe-bottom));
+      min-height: 0;
+      flex-direction: column;
+    }
+
+    .app-scroll.with-footer {
+      height: calc(100% - var(--tab-height) - var(--safe-bottom) - 72px);
+    }
+
+    .summary {
+      position: relative;
+      flex: 0 0 auto;
+      padding: 15px 15px 13px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #177352, #125940);
+      box-shadow: var(--shadow-summary);
+      color: #fff;
+    }
+
+    .stage-head {
+      min-height: 42px;
+      text-align: center;
+    }
+
+    .stage-line {
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 20px;
+      white-space: nowrap;
+    }
+
+    .stage-subline {
+      margin-top: 2px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 18px;
+      white-space: nowrap;
+    }
+
+    .metrics {
+      display: flex;
+      align-items: center;
+      height: 82px;
+      margin-top: 5px;
+    }
+
+    .metric {
+      display: flex;
+      flex: 1;
+      min-width: 0;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .metric-main {
+      flex: 1.10;
+    }
+
+    .metric-value {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      min-width: 0;
+      overflow: hidden;
+      height: 42px;
+      gap: 2px;
+    }
+
+    .metric-number {
+      font-size: 34px;
+      font-weight: 700;
+      line-height: 34px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .metric-number.amount {
+      max-width: 100%;
+      font-size: 25px;
+      line-height: 30px;
+      letter-spacing: -.02em;
+      white-space: nowrap;
+    }
+
+    .metric-unit {
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 18px;
+    }
+
+    .metric-label {
+      height: 29px;
+      margin-top: 3px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 18px;
+      white-space: nowrap;
+    }
+
+    .divider {
+      width: 1px;
+      height: 82px;
+      margin: 0 7px;
+      background: rgba(255, 255, 255, .20);
+    }
+
+    .today {
+      display: flex;
+      min-width: 0;
+      flex: 1;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .face {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .16);
+      font-size: 24px;
+      line-height: 42px;
+    }
+
+    .face.muted {
+      background: #e3ded4;
+      color: #6e675d;
+      filter: grayscale(1);
+      opacity: .92;
+    }
+
+    .today-copy {
+      height: 29px;
+      margin-top: 3px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 18px;
+      white-space: nowrap;
+    }
+
+    .calendar {
+      display: flex;
+      min-height: 0;
+      flex: 1;
+      flex-direction: column;
+      margin-top: 12px;
+      padding: 13px 10px 9px;
+      border-radius: 18px;
+      background: var(--paper);
+      box-shadow: var(--shadow-card);
+    }
+
+    .calendar-head {
+      position: relative;
+      display: flex;
+      align-items: center;
+      height: 44px;
+      flex: 0 0 auto;
+    }
+
+    .calendar-month {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 17px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      color: var(--ink);
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .arrow.prev {
+      margin-right: auto;
+    }
+
+    .arrow.next {
+      margin-left: auto;
+    }
+
+    .arrow.disabled {
+      color: #8c8272;
+      opacity: .45;
+    }
+
+    .weekdays,
+    .week {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 4px;
+    }
+
+    .weekdays {
+      flex: 0 0 auto;
+      margin-top: 6px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--line);
+      color: var(--ink-3);
+      font-size: 12px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .calendar-body {
+      display: flex;
+      min-height: 0;
+      flex: 1;
+      flex-direction: column;
+      justify-content: space-between;
+      margin-top: 5px;
+    }
+
+    .week {
+      flex: 1;
+      min-height: 0;
+    }
+
+    .day {
+      position: relative;
+      display: flex;
+      min-width: 0;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding-top: 1px;
+      overflow: hidden;
+    }
+
+    .day-number {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 31px;
+      height: 31px;
+      border: 2px solid transparent;
+      border-radius: 50%;
+      color: var(--ink);
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .day-time {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 14px;
+      margin-top: 2px;
+      color: var(--green-deep);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 14px;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .day.checked {
+      background: transparent;
+    }
+
+    .day.checked .day-number {
+      border-color: rgba(27, 127, 92, .48);
+      background: var(--green-soft);
+      color: var(--green-deep);
+      font-weight: 700;
+    }
+
+    .dot {
+      position: absolute;
+      top: 2px;
+      right: 5px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 0 2px var(--paper);
+    }
+
+    .day.settled {
+      background: transparent;
+    }
+
+    .day.settled .day-number {
+      border-color: rgba(138, 90, 0, .48);
+      background: var(--amber-soft);
+      color: var(--amber);
+      font-weight: 700;
+    }
+
+    .day.settled .day-time {
+      color: var(--amber);
+    }
+
+    .day.today {
+      background: transparent;
+    }
+
+    .day.today .day-number {
+      border-color: var(--red);
+    }
+
+    .day.future {
+      opacity: .24;
+    }
+
+    .day.empty {
+      border: 0;
+      background: transparent;
+    }
+
+    .action-bar {
+      display: flex;
+      flex: 0 0 auto;
+      gap: 8px;
+      height: 72px;
+      padding: 0 2px;
+      align-items: center;
+    }
+
+    .primary-action {
+      display: flex;
+      flex: 1;
+      align-items: center;
+      justify-content: center;
+      height: 52px;
+      border-radius: 13px;
+      background: var(--green);
+      color: #fff;
+      font-size: 17px;
+      font-weight: 700;
+      box-shadow: 0 8px 18px rgba(34, 38, 45, .14);
+      white-space: nowrap;
+    }
+
+    .primary-action.disabled {
+      background: #e2dcd1;
+      color: #5f584c;
+      box-shadow: none;
+    }
+
+    .employer-actions {
+      display: grid;
+      grid-template-columns: 1.08fr 1fr 1fr;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .employer-action {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 52px;
+      border-radius: 13px;
+      font-size: 16px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .employer-action.main {
+      background: var(--red);
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(34, 38, 45, .14);
+    }
+
+    .employer-action.neutral {
+      border: 1px solid var(--line);
+      background: var(--paper);
+      color: var(--ink);
+    }
+
+    .employer-action.warning {
+      border: 1px solid rgba(201, 64, 42, .28);
+      background: var(--red-soft);
+      color: var(--red-deep);
+    }
+
+    .tabbar {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      height: calc(var(--tab-height) + var(--safe-bottom));
+      padding-bottom: var(--safe-bottom);
+      border-top: 1px solid var(--line);
+      background: #fff;
+      z-index: 10;
+    }
+
+    .tab-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      height: var(--tab-height);
+    }
+
+    .tab {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--ink-3);
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .tab + .tab {
+      border-left: 1px solid var(--line);
+    }
+
+    .tab.active {
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .flow-page {
+      display: flex;
+      min-height: 0;
+      height: 100%;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 0 0 24px;
+      overscroll-behavior: contain;
+    }
+
+    .onboarding-page {
+      justify-content: center;
+      padding: 0;
+    }
+
+    .role-list {
+      width: 100%;
+    }
+
+    .role-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 94px;
+      margin: 0 0 13px;
+      border-radius: 18px;
+      background: var(--red);
+      color: #fff;
+      font-size: 20px;
+      font-weight: 700;
+      box-shadow: 0 10px 24px rgba(34, 38, 45, .14);
+    }
+
+    .role-button.employee {
+      background: var(--green);
+      box-shadow: 0 10px 24px rgba(34, 38, 45, .14);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+      align-items: end;
+    }
+
+    .form-row .field-label {
+      min-height: 18px;
+      white-space: nowrap;
+    }
+
+    .input-shell {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 46px;
+      padding: 10px 12px;
+      border: 1px solid #d9cbb6;
+      border-radius: 11px;
+      background: #fff;
+      color: var(--ink);
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .input-value {
+      display: flex;
+      min-width: 0;
+      align-items: baseline;
+      gap: 3px;
+    }
+
+    .input-unit {
+      color: var(--ink-3);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 15px;
+      white-space: nowrap;
+    }
+
+    .pricing-box {
+      margin-top: 10px;
+      padding: 13px;
+      border-radius: 12px;
+      background: var(--ink);
+      color: #fff;
+    }
+
+    .pricing-main {
+      font-size: 21px;
+      font-weight: 700;
+      line-height: 27px;
+    }
+
+    .pricing-sub {
+      margin-top: 2px;
+      color: #d8d1c3;
+      font-size: 12px;
+    }
+
+    .slider-shell {
+      margin-top: 8px;
+      padding: 11px 12px;
+      border: 1px solid #d9cbb6;
+      border-radius: 11px;
+      background: #fff;
+    }
+
+    .slider-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--ink-2);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .slider-track {
+      position: relative;
+      height: 4px;
+      margin-top: 11px;
+      border-radius: 999px;
+      background: #e5dccb;
+    }
+
+    .slider-track::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      width: 21%;
+      height: 4px;
+      border-radius: 999px;
+      background: var(--red);
+    }
+
+    .slider-thumb {
+      position: absolute;
+      top: 50%;
+      left: 21%;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 5px rgba(34,38,45,.28);
+      transform: translate(-50%, -50%);
+    }
+
+    .invite-box {
+      padding: 13px 0 12px;
+      text-align: center;
+    }
+
+    .invite-label {
+      color: var(--ink-3);
+      font-size: 12px;
+    }
+
+    .invite-code {
+      margin-top: 3px;
+      color: var(--red);
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: 5px;
+      line-height: 44px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .invite-expire {
+      margin-top: 2px;
+      color: var(--ink-3);
+      font-size: 12px;
+    }
+
+    .secondary-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 46px;
+      margin-top: 9px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      color: var(--ink-2);
+      font-size: 14px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .code-input {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 59px;
+      border: 2px solid var(--ink);
+      border-radius: 13px;
+      background: #fff;
+      color: var(--ink);
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 4px;
+    }
+
+    .settle-card {
+      margin-top: 15px;
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--paper);
+      box-shadow: var(--shadow-card);
+    }
+
+    .settle-range {
+      margin-top: 3px;
+      color: var(--ink);
+      font-size: 21px;
+      font-weight: 700;
+      line-height: 27px;
+    }
+
+    .settle-note {
+      margin-top: 4px;
+      color: var(--ink-3);
+      font-size: 12px;
+      line-height: 17px;
+    }
+
+    .settle-facts {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .settle-fact {
+      padding: 10px;
+      border-radius: 10px;
+      background: var(--paper-soft);
+    }
+
+    .calc-box {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 12px;
+      background: var(--paper-soft);
+    }
+
+    .calc-label {
+      color: var(--ink-3);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .calc-line {
+      margin-top: 3px;
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 20px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .money-input {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 48px;
+      margin-top: 7px;
+      padding: 10px 12px;
+      border: 1px solid #d9cbb6;
+      border-radius: 11px;
+      background: #fff;
+      color: var(--ink);
+      font-size: 20px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .reason-input {
+      min-height: 44px;
+      margin-top: 7px;
+      padding: 11px 12px;
+      border: 1px solid #d9cbb6;
+      border-radius: 11px;
+      background: #fff;
+      color: var(--ink-2);
+      font-size: 13px;
+    }
+
+    .proof-grid {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .proof-tile {
+      position: relative;
+      width: 78px;
+      height: 78px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.88), transparent 46%),
+        #e6dcc9;
+    }
+
+    .proof-remove {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--ink);
+      color: #fff;
+      font-size: 12px;
+    }
+
+    .proof-add {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 78px;
+      height: 78px;
+      border: 1px dashed #a99d89;
+      border-radius: 9px;
+      background: #fffdf9;
+      color: var(--ink-3);
+      font-size: 24px;
+    }
+
+    .flow-map {
+      max-width: 1560px;
+      margin: 0 auto 24px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255, 253, 249, .82);
+    }
+
+    .flow-map-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .flow-map-title {
+      margin: 0;
+      font-size: 19px;
+    }
+
+    .flow-map-state {
+      display: inline-flex;
+      align-items: center;
+      height: 30px;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: var(--green-soft);
+      color: var(--green-deep);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .flow-step-list {
+      display: flex;
+      overflow-x: auto;
+      gap: 8px;
+      margin-top: 13px;
+      padding-bottom: 2px;
+    }
+
+    .flow-step {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 44px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--ink-2);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .flow-step.active {
+      border-color: var(--green);
+      background: var(--green-soft);
+      color: var(--green-deep);
+    }
+
+    .pending-proof {
+      display: flex;
+      gap: 8px;
+      margin-top: 9px;
+    }
+
+    .pending-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 13px;
+    }
+
+    .pending-primary {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 48px;
+      border-radius: 12px;
+      background: var(--green);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .pending-secondary {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 48px;
+      border: 1px solid rgba(201, 64, 42, .30);
+      border-radius: 12px;
+      background: var(--red-soft);
+      color: var(--red-deep);
+      font-size: 15px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .ended-card {
+      margin-top: 18px;
+      padding: 20px 15px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--paper);
+      text-align: center;
+      box-shadow: var(--shadow-card);
+    }
+
+    .ended-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px;
+      height: 56px;
+      margin: 0 auto;
+      border-radius: 50%;
+      background: var(--paper-soft);
+      color: var(--ink-2);
+      font-size: 24px;
+    }
+
+    .ended-title {
+      margin: 11px 0 0;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .ended-copy {
+      margin: 6px 0 0;
+      color: var(--ink-2);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .prototype-toast {
+      position: fixed;
+      left: 50%;
+      bottom: 28px;
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      max-width: min(420px, calc(100vw - 32px));
+      min-height: 42px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: rgba(34, 38, 45, .92);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: 0 12px 30px rgba(34, 38, 45, .24);
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, 10px);
+      transition: opacity .18s ease, transform .18s ease;
+    }
+
+    .prototype-toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    .role-button,
+    .button-full,
+    .secondary-button,
+    .employer-action,
+    .board-day,
+    .chip,
+    .pending-primary,
+    .pending-secondary {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .state-card {
+      margin-top: 10px;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--paper);
+      box-shadow: var(--shadow-card);
+    }
+
+    .state-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--ink);
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .state-badge {
+      display: inline-flex;
+      align-items: center;
+      height: 24px;
+      padding: 0 9px;
+      border-radius: 999px;
+      background: var(--paper-soft);
+      color: var(--ink-2);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .state-badge.success { background: var(--green-soft); color: var(--green-deep); }
+    .state-badge.warning { background: var(--red-soft); color: var(--red-deep); }
+    .state-badge.info { background: #eaf0ff; color: #31527f; }
+
+    .state-copy {
+      margin: 6px 0 0;
+      color: var(--ink-2);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .backfill-shell {
+      display: flex;
+      min-height: 0;
+      height: 100%;
+      flex-direction: column;
+    }
+
+    .backfill-scroll {
+      min-height: 0;
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: 4px;
+    }
+
+    .backfill-footer {
+      flex: 0 0 auto;
+      display: flex;
+      height: 72px;
+      align-items: center;
+      margin-top: 10px;
+      padding: 12px 0;
+      border-top: 1px solid var(--line);
+      background: var(--cream);
+    }
+
+    .backfill-total {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      width: 100%;
+      height: 48px;
+    }
+
+    .backfill-total-copy {
+      min-width: 0;
+    }
+
+    .backfill-total-days {
+      color: var(--ink);
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 22px;
+      white-space: nowrap;
+    }
+
+    .backfill-total-money {
+      margin-top: 2px;
+      color: var(--ink-2);
+      font-size: 12px;
+      line-height: 17px;
+      white-space: nowrap;
+    }
+
+    .backfill-confirm {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      width: 154px;
+      height: 48px;
+      border-radius: 12px;
+      background: var(--green);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .backfill-card {
+      margin-top: 12px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--paper);
+      box-shadow: var(--shadow-card);
+    }
+
+    .backfill-card:first-child {
+      margin-top: 0;
+    }
+
+    .scope-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .scope-label {
+      display: block;
+      color: var(--ink-3);
+      font-size: 12px;
+      line-height: 17px;
+    }
+
+    .scope-value {
+      display: block;
+      margin-top: 1px;
+      color: var(--ink);
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 21px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .clear-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 44px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--ink-2);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .mode-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 13px;
+      padding: 4px;
+      border-radius: 10px;
+      background: var(--paper-soft);
+    }
+
+    .mode-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 44px;
+      border-radius: 8px;
+      color: var(--ink-2);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .mode-button.active {
+      background: #fff;
+      color: var(--green-deep);
+      box-shadow: 0 3px 10px rgba(34, 38, 45, .08);
+    }
+
+    .selection-status {
+      margin-top: 10px;
+      color: var(--green-deep);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 18px;
+    }
+
+    .date-board {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 5px;
+      margin-top: 10px;
+    }
+
+    #backfillBoard {
+      margin: 10px -7px 0;
+      gap: 2px;
+    }
+
+    .board-day {
+      position: relative;
+      display: flex;
+      min-width: 0;
+      height: 44px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    .board-day .month-tag {
+      position: absolute;
+      top: 3px;
+      left: 4px;
+      color: #6f675a;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 10px;
+    }
+
+    .board-day .day-text {
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 18px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .board-day.selectable {
+      border-color: rgba(27, 127, 92, .28);
+      color: var(--green-deep);
+    }
+
+    .board-day.selected {
+      border-color: var(--green);
+      background: var(--green);
+      color: #fff;
+    }
+
+    .board-day.endpoint {
+      box-shadow: 0 0 0 2px rgba(27, 127, 92, .16);
+    }
+
+    .board-day.disabled {
+      border-color: #eee5d6;
+      background: #f4efe5;
+      color: #6f675a;
+    }
+
+    .board-day.today {
+      border-color: rgba(201, 64, 42, .45);
+    }
+
+    .board-legend {
+      display: flex;
+      gap: 12px;
+      margin-top: 11px;
+      color: var(--ink-3);
+      font-size: 12px;
+      line-height: 16px;
+      white-space: nowrap;
+    }
+
+    .legend-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      margin-right: 4px;
+      border-radius: 50%;
+      background: var(--green);
+      vertical-align: 0;
+    }
+
+    .legend-dot.disabled {
+      background: #d8d0c0;
+    }
+
+    .legend-dot.today {
+      background: var(--red);
+    }
+
+    .compact-config {
+      display: grid;
+      grid-template-columns: 112px 1fr;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .time-box {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 66px;
+      padding: 10px 12px;
+      border: 1px solid #d9cbb6;
+      border-radius: 11px;
+      background: #fff;
+    }
+
+    .time-box span {
+      color: var(--ink-3);
+      font-size: 12px;
+      line-height: 15px;
+    }
+
+    .time-box strong {
+      margin-top: 1px;
+      color: var(--ink);
+      font-size: 19px;
+      font-weight: 700;
+      line-height: 24px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .reason-box {
+      display: flex;
+      min-width: 0;
+      flex-direction: column;
+      justify-content: center;
+      gap: 7px;
+      padding: 9px 10px;
+      border: 1px solid #d9cbb6;
+      border-radius: 11px;
+      background: #fff;
+    }
+
+    .reason-box .field-label {
+      margin: 0;
+    }
+
+    .reason-quick {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 1px;
+    }
+
+    .reason-quick .chip {
+      flex: 0 0 auto;
+      min-height: 44px;
+      padding: 0 9px;
+      font-size: 12px;
+    }
+
+    .flow-title {
+      margin: 2px 0 0;
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .flow-lead {
+      margin: 7px 0 0;
+      color: var(--ink-2);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .flow-card {
+      margin-top: 15px;
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: var(--paper);
+      box-shadow: var(--shadow-card);
+    }
+
+    .section-title {
+      margin: 0 0 10px;
+      color: var(--ink);
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .field {
+      margin-top: 12px;
+    }
+
+    .field:first-child {
+      margin-top: 0;
+    }
+
+    .field-label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--ink-2);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .field-value {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 45px;
+      padding: 10px 12px;
+      border: 1px solid #d9cbb6;
+      border-radius: 10px;
+      background: #fff;
+      color: var(--ink);
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .field-value .caret {
+      color: var(--ink-3);
+      font-size: 12px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--ink-2);
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .chip.selected {
+      border-color: var(--green);
+      background: var(--green-soft);
+      color: var(--green-deep);
+    }
+
+    .chip.locked {
+      border-style: dashed;
+      color: #6f675a;
+      background: #f5f1e9;
+    }
+
+    .note {
+      margin: 11px 0 0;
+      padding: 10px 11px;
+      border-left: 0;
+      border-radius: 10px;
+      background: var(--green-soft);
+      color: var(--green-deep);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .note.warning {
+      border-left-color: var(--red);
+      background: var(--red-soft);
+      color: var(--red-deep);
+    }
+
+    .button-full {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 52px;
+      margin-top: 16px;
+      border-radius: 13px;
+      background: var(--green);
+      color: #fff;
+      font-size: 17px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .button-full.danger {
+      background: var(--red);
+      box-shadow: 0 8px 18px rgba(34, 38, 45, .14);
+    }
+
+    .history-header {
+      flex: 0 0 auto;
+      padding: 12px;
+      border-radius: 16px;
+      background: var(--paper);
+      box-shadow: var(--shadow-card);
+    }
+
+    .history-tabs {
+      display: flex;
+      overflow-x: auto;
+      gap: 7px;
+      padding-bottom: 1px;
+    }
+
+    .history-tab {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 44px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--ink-3);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .history-tab.active {
+      border-color: var(--green);
+      background: var(--green-soft);
+      color: var(--green-deep);
+    }
+
+    .cooperation-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .summary-cell {
+      min-width: 0;
+      text-align: center;
+    }
+
+    .summary-cell-label {
+      color: var(--ink-3);
+      font-size: 12px;
+      line-height: 15px;
+      white-space: nowrap;
+    }
+
+    .summary-cell-value {
+      margin-top: 1px;
+      color: var(--ink);
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 22px;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .contract-toggle {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 44px;
+      box-sizing: border-box;
+      width: 100%;
+      margin-top: 9px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--ink-2);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 34px;
+    }
+
+    .contract-toggle .chevron {
+      position: absolute;
+      top: 50%;
+      right: 14px;
+      transition: transform .18s ease;
+      transform: translateY(-50%);
+    }
+
+    .contract-toggle-label {
+      display: block;
+      width: 100%;
+      line-height: 44px;
+      text-align: center;
+    }
+
+    .history-header.expanded .contract-toggle .chevron {
+      transform: translateY(-50%) rotate(180deg);
+    }
+
+    .contract-detail {
+      display: none;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+    }
+
+    .history-header.expanded .contract-detail {
+      display: block;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px 12px;
+    }
+
+    .info-item {
+      min-width: 0;
+    }
+
+    .info-label {
+      color: var(--ink-3);
+      font-size: 12px;
+      line-height: 17px;
+    }
+
+    .info-value {
+      margin-top: 1px;
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 19px;
+    }
+
+    .info-wide {
+      grid-column: 1 / -1;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      height: 24px;
+      padding: 0 9px;
+      border-radius: 999px;
+      background: var(--green-soft);
+      color: var(--green-deep);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .history-list {
+      min-height: 0;
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: 10px;
+    }
+
+    .record {
+      margin-top: 10px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--paper);
+      box-shadow: var(--shadow-card);
+    }
+
+    .future-record {
+      display: none;
+    }
+
+    .history-list.confirmed .future-record {
+      display: block;
+    }
+
+    .record-main {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .record-stage {
+      color: var(--ink);
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 22px;
+      white-space: nowrap;
+    }
+
+    .record-range {
+      margin-top: 3px;
+      color: var(--ink-2);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 17px;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .record-amount {
+      min-width: 0;
+      text-align: right;
+    }
+
+    .record-amount-value {
+      color: var(--red);
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 26px;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .record-amount-label {
+      margin-top: 1px;
+      color: var(--ink-3);
+      font-size: 12px;
+      line-height: 15px;
+      white-space: nowrap;
+    }
+
+    .record-facts {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+      padding: 9px;
+      border-radius: 10px;
+      background: var(--paper-soft);
+    }
+
+    .record-fact-label {
+      color: var(--ink-2);
+      font-size: 12px;
+      line-height: 15px;
+    }
+
+    .record-fact-value {
+      margin-top: 1px;
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 19px;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .proofs {
+      display: flex;
+      gap: 7px;
+      margin-top: 9px;
+    }
+
+    .proof {
+      width: 47px;
+      height: 47px;
+      border-radius: 6px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.9), transparent 45%),
+        #e6dcc9;
+      border: 1px solid var(--line);
+    }
+
+    .fact-list {
+      margin: 0;
+      padding: 0;
+      color: var(--ink-2);
+      font-size: 13px;
+      line-height: 1.85;
+      list-style: none;
+    }
+
+    .fact-list li::before {
+      content: "";
+      display: inline-block;
+      width: 5px;
+      height: 5px;
+      margin-right: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      vertical-align: 2px;
+    }
+
+    .termination .fact-list li::before {
+      background: var(--red);
+    }
+
+    .summary-rows {
+      margin-top: 12px;
+      padding: 11px;
+      border-radius: 10px;
+      background: var(--paper-soft);
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      color: var(--ink-2);
+      font-size: 13px;
+      line-height: 25px;
+    }
+
+    .summary-row strong {
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .design-notes {
+      max-width: 1560px;
+      margin: 8px auto 0;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255, 253, 249, .75);
+    }
+
+    .design-notes h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .notes-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 12px;
+    }
+
+    .note-block h3 {
+      margin: 0;
+      color: var(--green-deep);
+      font-size: 13px;
+    }
+
+    .note-block p {
+      margin: 6px 0 0;
+      color: var(--ink-2);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    @media (max-width: 900px) {
+      .studio {
+        padding: 24px 16px 48px;
+      }
+
+      .notes-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="studio">
+    <header class="studio-header">
+      <span class="eyebrow">v1.1 VISUAL DRAFT</span>
+      <h1>合作闭环 · 可信日历</h1>
+      <p class="studio-lead">
+        这版视觉稿把“当前记工”和“合作管理”分开：阿姨每天仍只需要看一个主按钮；雇主把结算、补录、终止集中在同一操作区；合同和历史统一放到历史 Tab，形成可核对的合作档案。
+      </p>
+      <div class="principles">
+        <span class="principle">大道至简</span>
+        <span class="principle">事实可追溯</span>
+        <span class="principle">字体层级统一</span>
+        <span class="principle">低频操作不干扰打卡</span>
+        <span class="principle">Tab 贴底</span>
+      </div>
+    </header>
+
+    <section class="flow-map" aria-label="完整流程体验">
+      <div class="flow-map-head">
+        <h2 class="flow-map-title">完整闭环体验</h2>
+        <div class="flow-map-state" id="flowState">当前：身份选择</div>
+      </div>
+      <p class="flow-lead" style="margin-top:10px;">点击流程节点可检查页面；点击图内主按钮会按真实路径跳转，并用提示反馈结果。</p>
+      <div class="flow-step-list" id="flowSteps">
+        <div class="flow-step active" data-screen="onboarding">1 身份选择</div>
+        <div class="flow-step" data-screen="create">2 创建合作</div>
+        <div class="flow-step" data-screen="waiting">3 等待匹配</div>
+        <div class="flow-step" data-screen="join">4 阿姨核对</div>
+        <div class="flow-step" data-screen="employee-current">5 阿姨当期</div>
+        <div class="flow-step" data-screen="employer-current">6 雇主当期</div>
+        <div class="flow-step" data-screen="backfill">7 补录</div>
+        <div class="flow-step" data-screen="settlement">8 发起结算</div>
+        <div class="flow-step" data-screen="pending-settlement">9 阿姨确认</div>
+        <div class="flow-step" data-screen="new-stage">10 新一期</div>
+        <div class="flow-step" data-screen="history">11 历史档案</div>
+        <div class="flow-step" data-screen="termination">12 终止合同</div>
+        <div class="flow-step" data-screen="ended">13 重新开始</div>
+        <div class="flow-step" data-screen="states">14 状态兜底</div>
+      </div>
+    </section>
+
+    <section class="board">
+      <!-- 01 身份选择 -->
+      <!-- id: onboarding -->
+      <article id="screen-onboarding" class="screen-card">
+        <div class="screen-meta">
+          <div class="screen-index">01 / ONBOARDING</div>
+          <div class="screen-name">身份选择</div>
+          <p class="screen-desc">首次进入只保留两个大按钮，不放说明、广告或调试入口。</p>
+        </div>
+        <div class="phone">
+          <div class="app">
+            <div class="flow-page onboarding-page">
+              <div class="role-list">
+                <div class="role-button">我是雇主</div>
+                <div class="role-button employee">我是阿姨</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 02 创建合作 -->
+      <!-- id: create -->
+      <article id="screen-create" class="screen-card">
+        <div class="screen-meta">
+          <div class="screen-index">02 / CREATE</div>
+          <div class="screen-name">雇主 · 创建合作</div>
+          <p class="screen-desc">价格和时间是必看信息，地图选点与围栏半径保持同一张卡片。</p>
+        </div>
+        <div class="phone">
+          <div class="app">
+            <div class="flow-page">
+              <h1 class="flow-title">创建合作</h1>
+              <p class="flow-lead">填写双方约定的人工价格、开始日期和上户地址。</p>
+
+              <section class="flow-card">
+                <h2 class="section-title">价格</h2>
+                <div class="form-row">
+                  <div class="field">
+                    <span class="field-label">总金额</span>
+                    <div class="input-shell">
+                      <span class="input-value">8000<span class="input-unit">元</span></span>
+                      <span class="caret">修改</span>
+                    </div>
+                  </div>
+                  <div class="field">
+                    <span class="field-label">约定天数</span>
+                    <div class="input-shell">
+                      <span class="input-value">26<span class="input-unit">天</span></span>
+                      <span class="caret">修改</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="pricing-box">
+                  <div class="pricing-main">每天 ¥307.69</div>
+                  <div class="pricing-sub">按 8000 元 ÷ 26 天计算</div>
+                </div>
+              </section>
+
+              <section class="flow-card">
+                <h2 class="section-title">时间与地址</h2>
+                <div class="field">
+                  <span class="field-label">开始日期</span>
+                  <div class="input-shell">2026.08.12 <span class="caret">修改</span></div>
+                </div>
+                <div class="field">
+                  <span class="field-label">家庭地址</span>
+                  <div class="input-shell">上海市黄浦区示范小区</div>
+                  <div class="secondary-button">地图选择位置</div>
+                </div>
+                <div class="field">
+                  <span class="field-label">围栏半径</span>
+                  <div class="slider-shell">
+                    <div class="slider-top"><span>100 米</span><span>300 米</span><span>1000 米</span></div>
+                    <div class="slider-track"><span class="slider-thumb"></span></div>
+                  </div>
+                </div>
+                <div class="button-full">创建合作</div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 03 等待匹配 -->
+      <!-- id: waiting -->
+      <article id="screen-waiting" class="screen-card">
+        <div class="screen-meta">
+          <div class="screen-index">03 / WAITING</div>
+          <div class="screen-name">雇主 · 等待阿姨接受</div>
+          <p class="screen-desc">匹配码是页面焦点，合作信息只做核对，回退和重生成放在次要位置。</p>
+        </div>
+        <div class="phone">
+          <div class="app">
+            <div class="flow-page">
+              <h1 class="flow-title">等待阿姨接受</h1>
+              <p class="flow-lead">把匹配码发给阿姨；她确认合作信息后，双方会自动匹配。</p>
+
+              <section class="flow-card">
+                <div class="invite-box">
+                  <div class="invite-label">8 位匹配码</div>
+                  <div class="invite-code">A7K2M9QX</div>
+                  <div class="invite-expire">有效期至 2026.08.13 21:30</div>
+                </div>
+                <div class="summary-rows">
+                  <div class="summary-row"><span>合作定价</span><strong>8000 元 / 26 天</strong></div>
+                  <div class="summary-row"><span>日薪</span><strong>¥307.69 / 天</strong></div>
+                  <div class="summary-row"><span>开始日期</span><strong>2026.08.12</strong></div>
+                  <div class="summary-row"><span>家庭地址</span><strong>上海市黄浦区示范小区</strong></div>
+                  <div class="summary-row"><span>围栏半径</span><strong>300 米</strong></div>
+                </div>
+                <div class="button-full">复制匹配码</div>
+                <div class="secondary-button">重新生成匹配码</div>
+                <div class="secondary-button">返回修改</div>
+                <div class="secondary-button">重新选择身份</div>
+                <p class="note">页面每 5 秒自动检查匹配状态；重新生成或修改后，旧匹配码立即失效。</p>
+              </section>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 04 阿姨匹配 -->
+      <!-- id: join -->
+      <article id="screen-join" class="screen-card">
+        <div class="screen-meta">
+          <div class="screen-index">04 / JOIN</div>
+          <div class="screen-name">阿姨 · 核对并匹配</div>
+          <p class="screen-desc">先核对价格、地址和围栏，再确认匹配，避免阿姨盲目输入匹配码。</p>
+        </div>
+        <div class="phone">
+          <div class="app">
+            <div class="flow-page">
+              <h1 class="flow-title">输入匹配码</h1>
+              <p class="flow-lead">先查看合作信息，确认没有问题后再确认匹配。</p>
+
+              <section class="flow-card">
+                <div class="code-input">A7K2M9QX</div>
+                <div class="button-full">查看合作信息</div>
+                <div class="secondary-button">重新选择身份</div>
+              </section>
+
+              <section class="flow-card">
+                <h2 class="section-title">核对合作信息</h2>
+                <div class="summary-rows">
+                  <div class="summary-row"><span>合作定价</span><strong>8000 元 / 26 天</strong></div>
+                  <div class="summary-row"><span>日薪</span><strong>¥307.69 / 天</strong></div>
+                  <div class="summary-row"><span>开始日期</span><strong>2026.08.12</strong></div>
+                  <div class="summary-row"><span>家庭地址</span><strong>上海市黄浦区示范小区</strong></div>
+                  <div class="summary-row"><span>围栏半径</span><strong>300 米</strong></div>
+                </div>
+                <div class="button-full">确认匹配</div>
+                <p class="note">确认后从开始日期记工；开始日期未到时，首页会明确提示暂不用打卡。</p>
+              </section>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 05 阿姨当期 -->
+      <!-- id: employee-current -->
+      <article id="screen-employee-current" class="screen-card">
+        <div class="screen-meta">
+          <div class="screen-index">05 / EMPLOYEE</div>
+          <div class="screen-name">阿姨 · 当期</div>
+          <p class="screen-desc">本期天数仍是第一视觉；右侧只回答“今天有没有打卡”。日历承担日期事实和时间凭证。</p>
+        </div>
+        <div class="phone">
+          <div class="app">
+            <div class="app-scroll with-footer">
+              <section class="summary">
+                <div class="stage-head">
+                  <div class="stage-line">第 3 期 · 2026.11.01 开始</div>
+                  <div class="stage-subline">累计工作 62 天 · 含补录 1 天</div>
+                </div>
+                <div class="metrics">
+                  <div class="metric metric-main">
+                    <div class="metric-value">
+                      <span class="metric-number">10</span>
+                      <span class="metric-unit">天</span>
+                    </div>
+                    <div class="metric-label">本期已上工</div>
+                  </div>
+                  <div class="divider"></div>
+                  <div class="today">
+                    <div class="face muted">🙂</div>
+                    <div class="today-copy">今日未打卡</div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="calendar">
+                <div class="calendar-head">
+                  <div class="arrow prev">‹</div>
+                  <div class="calendar-month">2026年11月</div>
+                  <div class="arrow next disabled">›</div>
+                </div>
+                <div class="weekdays">
+                  <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+                </div>
+                <div class="calendar-body">
+                  <div class="week">
+                    <span></span><span></span><span></span><span></span><span></span><span></span>
+                    <span class="day checked"><span class="dot"></span><span class="day-number">1</span><span class="day-time">08:12</span></span>
+                  </div>
+                  <div class="week">
+                    <span class="day checked"><span class="dot"></span><span class="day-number">2</span><span class="day-time">08:04</span></span>
+                    <span class="day checked"><span class="dot"></span><span class="day-number">3</span><span class="day-time">08:20</span></span>
+                    <span class="day checked"><span class="dot"></span><span class="day-number">4</span><span class="day-time">08:09</span></span>
+                    <span class="day checked"><span class="dot"></span><span class="day-number">5</span><span class="day-time">08:16</span></span>
+                    <span class="day checked"><span class="dot"></span><span class="day-number">6</span><span class="day-time">08:11</span></span>
+                    <span class="day checked"><span class="dot"></span><span class="day-number">7</span><span class="day-time">08:23</span></span>
+                    <span class="day checked"><span class="dot"></span><span class="day-number">8</span><span class="day-time">08:06</span></span>
+                  </div>
+                  <div class="week">
+                    <span class="day"><span class="day-number">9</span></span>
+                    <span class="day"><span class="day-number">10</span></span>
+                    <span class="day checked"><span class="dot"></span><span class="day-number">11</span><span class="day-time">08:31</span></span>
+                    <span class="day checked"><span class="dot"></span><span class="day-number">12</span><span class="day-time">08:18</span></span>
+                    <span class="day today"><span class="day-number">13</span></span>
+                    <span class="day future"><span class="day-number">14</span></span>
+                    <span class="day future"><span class="day-number">15</span></span>
+                  </div>
+                  <div class="week">
+                    <span class="day future"><span class="day-number">16</span></span>
+                    <span class="day future"><span class="day-number">17</span></span>
+                    <span class="day future"><span class="day-number">18</span></span>
+                    <span class="day future"><span class="day-number">19</span></span>
+                    <span class="day future"><span class="day-number">20</span></span>
+                    <span class="day future"><span class="day-number">21</span></span>
+                    <span class="day future"><span class="day-number">22</span></span>
+                  </div>
+                  <div class="week">
+                    <span class="day future"><span class="day-number">23</span></span>
+                    <span class="day future"><span class="day-number">24</span></span>
+                    <span class="day future"><span class="day-number">25</span></span>
+                    <span class="day future"><span class="day-number">26</span></span>
+                    <span class="day future"><span class="day-number">27</span></span>
+                    <span class="day future"><span class="day-number">28</span></span>
+                    <span class="day future"><span class="day-number">29</span></span>
+                  </div>
+                  <div class="week">
+                    <span class="day future"><span class="day-number">30</span></span>
+                    <span></span><span></span><span></span><span></span><span></span><span></span>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <div class="action-bar">
+              <div class="primary-action">去打卡</div>
+            </div>
+
+            <nav class="tabbar">
+              <div class="tab-inner">
+                <div class="tab active">当期</div>
+                <div class="tab">历史</div>
+              </div>
+            </nav>
+
+          </div>
+        </div>
+      </article>
+
+      <!-- 06 雇主当期 -->
+      <!-- id: employer-current -->
+      <article id="screen-employer-current" class="screen-card">
+        <div class="screen-meta">
+          <div class="screen-index">06 / EMPLOYER</div>
+          <div class="screen-name">雇主 · 当期</div>
+          <p class="screen-desc">雇主关注本期进展与全局支付。金额区已按 ¥100,000 做宽度压力测试；本页闭环样例显示实际累计支付。</p>
+        </div>
+        <div class="phone">
+          <div class="app">
+            <div class="app-scroll with-footer">
+              <section class="summary">
+                <div class="stage-head">
+                  <div class="stage-line">第 3 期 · 2026.11.01 开始</div>
+                  <div class="stage-subline">历史已结算 2 期</div>
+                </div>
+                <div class="metrics">
+                  <div class="metric metric-main">
+                    <div class="metric-value">
+                      <span class="metric-number">10</span>
+                      <span class="metric-unit">天</span>
+                    </div>
+                    <div class="metric-label">本期已上工</div>
+                  </div>
+                  <div class="divider"></div>
+                  <div class="today">
+                    <div class="metric-value">
+                      <span class="metric-number amount">¥16,000</span>
+                    </div>
+                    <div class="metric-label">累计支付 2 期</div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="calendar">
+                <div class="calendar-head">
+                  <div class="arrow prev">‹</div>
+                  <div class="calendar-month">2026年11月</div>
+                  <div class="arrow next disabled">›</div>
+                </div>
+                <div class="weekdays">
+                  <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+                </div>
+                <div class="calendar-body">
+                  <div class="week">
+                    <span></span><span></span><span></span><span></span><span></span><span></span>
+                    <span class="day checked"><span class="dot"></span><span class="day-number">1</span><span class="day-time">08:12</span></span>
+                  </div>
+                  <div class="week">
+                    <span class="day checked"><span class="dot"></span><span class="day-number">2</span><span class="day-time">08:04</span></span>
+                    <span class="day checked"><span class="dot"></span><span class="day-number">3</span><span class="day-time">08:20</span></span>
+                    <span class="day checked"><span class="dot"></span><span class="day-number">4</span><span class="day-time">08:09</span></span>
+                    <span class="day checked"><span class="dot"></span><span class="day-number">5</span><span class="day-time">08:16</span></span>
+                    <span class="day checked"><span class="dot"></span><span class="day-number">6</span><span class="day-time">08:11</span></span>
+                    <span class="day checked"><span class="dot"></span><span class="day-number">7</span><span class="day-time">08:23</span></span>
+                    <span class="day checked"><span class="dot"></span><span class="day-number">8</span><span class="day-time">08:06</span></span>
+                  </div>
+                  <div class="week">
+                    <span class="day"><span class="day-number">9</span></span>
+                    <span class="day"><span class="day-number">10</span></span>
+                    <span class="day checked"><span class="dot"></span><span class="day-number">11</span><span class="day-time">08:31</span></span>
+                    <span class="day checked"><span class="dot"></span><span class="day-number">12</span><span class="day-time">08:18</span></span>
+                    <span class="day today"><span class="day-number">13</span></span>
+                    <span class="day future"><span class="day-number">14</span></span>
+                    <span class="day future"><span class="day-number">15</span></span>
+                  </div>
+                  <div class="week">
+                    <span class="day future"><span class="day-number">16</span></span>
+                    <span class="day future"><span class="day-number">17</span></span>
+                    <span class="day future"><span class="day-number">18</span></span>
+                    <span class="day future"><span class="day-number">19</span></span>
+                    <span class="day future"><span class="day-number">20</span></span>
+                    <span class="day future"><span class="day-number">21</span></span>
+                    <span class="day future"><span class="day-number">22</span></span>
+                  </div>
+                  <div class="week">
+                    <span class="day future"><span class="day-number">23</span></span>
+                    <span class="day future"><span class="day-number">24</span></span>
+                    <span class="day future"><span class="day-number">25</span></span>
+                    <span class="day future"><span class="day-number">26</span></span>
+                    <span class="day future"><span class="day-number">27</span></span>
+                    <span class="day future"><span class="day-number">28</span></span>
+                    <span class="day future"><span class="day-number">29</span></span>
+                  </div>
+                  <div class="week">
+                    <span class="day future"><span class="day-number">30</span></span>
+                    <span></span><span></span><span></span><span></span><span></span><span></span>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <div class="action-bar">
+              <div class="employer-actions">
+                <div class="employer-action main">结算</div>
+                <div class="employer-action neutral">补录</div>
+                <div class="employer-action warning">终止</div>
+              </div>
+            </div>
+
+            <nav class="tabbar">
+              <div class="tab-inner">
+                <div class="tab active">当期</div>
+                <div class="tab">历史</div>
+              </div>
+            </nav>
+
+          </div>
+        </div>
+      </article>
+
+      <!-- 07 补录 -->
+      <!-- id: backfill -->
+      <article id="screen-backfill" class="screen-card">
+        <div class="screen-meta">
+          <div class="screen-index">07 / BACKFILL</div>
+          <div class="screen-name">雇主 · 补录</div>
+          <p class="screen-desc">默认 09:00 和「前期补录」。支持连续日期批量选择；已打卡日期置灰不可修改，提交前只确认补录天数。</p>
+        </div>
+        <div class="phone">
+          <div class="app">
+            <div class="backfill-shell">
+              <div class="backfill-scroll">
+                <h1 class="flow-title">补录</h1>
+                <p class="flow-lead">本期从 11.01 开始；可补今天往前30天与本期的交集。</p>
+
+                <section class="backfill-card">
+                  <div class="scope-row">
+                    <div>
+                      <span class="scope-label">今天往前 30 天（不含今天）</span>
+                      <strong class="scope-value">2026.11.01 - 2026.11.12</strong>
+                    </div>
+                    <div class="clear-button" id="clearBackfill">清空重选</div>
+                  </div>
+
+                  <div class="mode-row">
+                    <div class="mode-button active" data-mode="range">连续日期</div>
+                    <div class="mode-button" data-mode="single">单日修改</div>
+                  </div>
+
+                  <div class="selection-status" id="selectionStatus">已选 11.09 - 11.10 · 共 2 天</div>
+
+                  <div class="date-board" id="backfillBoard">
+                    <div class="board-day disabled"></div>
+                    <div class="board-day disabled"></div>
+                    <div class="board-day disabled"></div>
+                    <div class="board-day disabled"></div>
+                    <div class="board-day disabled"></div>
+                    <div class="board-day disabled"></div>
+                    <div class="board-day disabled"><span class="day-text">1</span></div>
+
+                    <div class="board-day disabled"><span class="day-text">2</span></div>
+                    <div class="board-day disabled"><span class="day-text">3</span></div>
+                    <div class="board-day disabled"><span class="day-text">4</span></div>
+                    <div class="board-day disabled"><span class="day-text">5</span></div>
+                    <div class="board-day disabled"><span class="day-text">6</span></div>
+                    <div class="board-day disabled"><span class="day-text">7</span></div>
+                    <div class="board-day disabled"><span class="day-text">8</span></div>
+
+                    <div class="board-day selectable selected endpoint" data-date="11.09" data-selectable="1"><span class="day-text">9</span></div>
+                    <div class="board-day selectable selected endpoint" data-date="11.10" data-selectable="1"><span class="day-text">10</span></div>
+                    <div class="board-day disabled"><span class="day-text">11</span></div>
+                    <div class="board-day disabled"><span class="day-text">12</span></div>
+                    <div class="board-day disabled today"><span class="day-text">13</span></div>
+                    <div class="board-day disabled"><span class="day-text">14</span></div>
+                    <div class="board-day disabled"><span class="day-text">15</span></div>
+                  </div>
+
+                  <div class="board-legend">
+                    <span><span class="legend-dot"></span>已选</span>
+                    <span><span class="legend-dot disabled"></span>已打卡</span>
+                    <span><span class="legend-dot today"></span>今天</span>
+                  </div>
+                </section>
+
+                <section class="backfill-card">
+                  <div class="compact-config">
+                    <div class="time-box">
+                      <span>统一时间</span>
+                      <strong>09:00</strong>
+                    </div>
+                    <div class="reason-box">
+                      <span class="field-label">原因</span>
+                      <div class="reason-quick">
+                        <span class="chip selected">前期补录</span>
+                        <span class="chip">手机没电</span>
+                        <span class="chip">忘记打卡</span>
+                        <span class="chip">手机故障</span>
+                        <span class="chip">其他</span>
+                      </div>
+                    </div>
+                  </div>
+                  <p class="note">连续日期适合整段时间补录；提交后立即计入本期，无需阿姨确认。</p>
+                </section>
+              </div>
+
+              <div class="backfill-footer">
+                <div class="backfill-total">
+                  <div class="backfill-total-copy">
+                    <div class="backfill-total-days" id="backfillDays">将补 6 天</div>
+                    <div class="backfill-total-money" id="backfillDetail">统一 09:00 · 前期补录</div>
+                  </div>
+                  <div class="backfill-confirm" id="backfillConfirm">补录</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 08 结算 -->
+      <!-- id: settlement -->
+      <article id="screen-settlement" class="screen-card">
+        <div class="screen-meta">
+          <div class="screen-index">08 / SETTLEMENT</div>
+          <div class="screen-name">雇主 · 结算这一期</div>
+          <p class="screen-desc">先看合同口径，再填实付金额和上传凭证；结算截止到最后一次打卡日。</p>
+        </div>
+        <div class="phone">
+          <div class="app">
+            <div class="flow-page">
+              <h1 class="flow-title">结算这一期</h1>
+              <p class="flow-lead">本次结算截至 2026.11.12；阿姨确认后，新期从 2026.11.13 开始。</p>
+
+              <section class="settle-card">
+                <div class="record-range">2026.11.01 至 2026.11.12</div>
+                <div class="settle-note">结算后生成历史记录；新期从截止日后一天开始。</div>
+
+                <div class="settle-facts">
+                  <div class="settle-fact">
+                    <div class="record-fact-label">已干</div>
+                    <div class="record-fact-value">12 天</div>
+                  </div>
+                  <div class="settle-fact">
+                    <div class="record-fact-label">日薪</div>
+                    <div class="record-fact-value">¥307.69</div>
+                  </div>
+                </div>
+
+                <div class="calc-box">
+                  <div class="calc-label">合同口径</div>
+                  <div class="calc-line">8000 元 ÷ 26 天 = ¥307.69 / 天</div>
+                  <div class="calc-label" style="margin-top:10px">本期计算</div>
+                  <div class="calc-line">8000 ÷ 26 × 12 = ¥3,692.31</div>
+                </div>
+
+                <div class="field">
+                  <span class="field-label">实际支付金额（元）</span>
+                  <div class="money-input">8000 <span class="caret">修改</span></div>
+                </div>
+                <div class="field">
+                  <span class="field-label">差额原因</span>
+                  <div class="reason-input">实付与计算不一致时必填</div>
+                </div>
+                <div class="field">
+                  <span class="field-label">转账截图（必填，最多3张）</span>
+                  <div class="proof-grid">
+                    <div class="proof-tile"><span class="proof-remove">×</span></div>
+                    <div class="proof-tile"><span class="proof-remove">×</span></div>
+                    <div class="proof-add">+</div>
+                  </div>
+                </div>
+                <div class="button-full">发给阿姨确认</div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 09 阿姨确认结算 -->
+      <article id="screen-pending-settlement" class="screen-card">
+        <div class="screen-meta">
+          <div class="screen-index">09 / CONFIRM</div>
+          <div class="screen-name">阿姨 · 确认结算</div>
+          <p class="screen-desc">高信任动作必须让阿姨看懂口径、实付和凭证；确认前不能继续打卡。</p>
+        </div>
+        <div class="phone">
+          <div class="app">
+            <div class="flow-page">
+              <h1 class="flow-title">雇主已结算</h1>
+              <p class="flow-lead">请核对这一期的工作天数和转账截图，确认后才开始下一期。</p>
+
+              <section class="settle-card">
+                <div class="record-range">2026.11.01 至 2026.11.12</div>
+                <div class="settle-note">确认后新期从 2026.11.13 开始，可继续打卡。</div>
+
+                <div class="settle-facts">
+                  <div class="settle-fact">
+                    <div class="record-fact-label">干了</div>
+                    <div class="record-fact-value">12 天</div>
+                  </div>
+                  <div class="settle-fact">
+                    <div class="record-fact-label">平均到岗</div>
+                    <div class="record-fact-value">08:09</div>
+                  </div>
+                </div>
+
+                <div class="calc-box">
+                  <div class="calc-label">合同口径</div>
+                  <div class="calc-line">8000 元 ÷ 26 天 = ¥307.69 / 天</div>
+                  <div class="calc-label" style="margin-top:10px">本期计算</div>
+                  <div class="calc-line">8000 ÷ 26 × 12 = ¥3,692.31</div>
+                </div>
+
+                <div class="field">
+                  <span class="field-label">实付金额</span>
+                  <div class="money-input">¥3,692.31</div>
+                </div>
+                <div class="field">
+                  <span class="field-label">转账截图</span>
+                  <div class="pending-proof"><div class="proof-tile"></div><div class="proof-tile"></div></div>
+                </div>
+                <div class="pending-actions">
+                  <div class="pending-secondary">金额不对</div>
+                  <div class="pending-primary">确认收到</div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 10 结算后新一期 -->
+      <article id="screen-new-stage" class="screen-card">
+        <div class="screen-meta">
+          <div class="screen-index">10 / NEW STAGE</div>
+          <div class="screen-name">阿姨 · 新一期</div>
+          <p class="screen-desc">阿姨确认收款后回到当期，明确今天不计入，明天才开始新一期。</p>
+        </div>
+        <div class="phone">
+          <div class="app">
+            <div class="app-scroll with-footer">
+              <section class="summary">
+                <div class="stage-head">
+                  <div class="stage-line">第 4 期 · 2026.11.13 开始</div>
+                  <div class="stage-subline">上一期已结算，本期今天开始</div>
+                </div>
+                <div class="metrics">
+                  <div class="metric metric-main">
+                    <div class="metric-value"><span class="metric-number">0</span><span class="metric-unit">天</span></div>
+                    <div class="metric-label">本期已上工</div>
+                  </div>
+                  <div class="divider"></div>
+                  <div class="today">
+                    <div class="face muted">🙂</div>
+                    <div class="today-copy">今日未打卡</div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="calendar">
+                <div class="calendar-head">
+                  <div class="arrow prev">‹</div>
+                  <div class="calendar-month">2026年11月</div>
+                  <div class="arrow next disabled">›</div>
+                </div>
+                <div class="weekdays"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+                <div class="calendar-body">
+                  <div class="week">
+                    <span></span><span></span><span></span><span></span><span></span><span></span>
+                    <span class="day settled"><span class="day-number">1</span><span class="day-time">08:12</span></span>
+                  </div>
+                  <div class="week">
+                    <span class="day settled"><span class="day-number">2</span><span class="day-time">08:04</span></span>
+                    <span class="day settled"><span class="day-number">3</span><span class="day-time">08:20</span></span>
+                    <span class="day settled"><span class="day-number">4</span><span class="day-time">08:09</span></span>
+                    <span class="day settled"><span class="day-number">5</span><span class="day-time">08:16</span></span>
+                    <span class="day settled"><span class="day-number">6</span><span class="day-time">08:11</span></span>
+                    <span class="day settled"><span class="day-number">7</span><span class="day-time">08:23</span></span>
+                    <span class="day settled"><span class="day-number">8</span><span class="day-time">08:06</span></span>
+                  </div>
+                  <div class="week">
+                    <span class="day settled"><span class="day-number">9</span><span class="day-time">09:00</span></span>
+                    <span class="day settled"><span class="day-number">10</span><span class="day-time">09:00</span></span>
+                    <span class="day settled"><span class="day-number">11</span><span class="day-time">08:31</span></span>
+                    <span class="day settled"><span class="day-number">12</span><span class="day-time">08:18</span></span>
+                    <span class="day today"><span class="day-number">13</span></span>
+                    <span class="day future"><span class="day-number">14</span></span>
+                    <span class="day future"><span class="day-number">15</span></span>
+                  </div>
+                  <div class="week">
+                    <span class="day future"><span class="day-number">16</span></span>
+                    <span class="day future"><span class="day-number">17</span></span>
+                    <span class="day future"><span class="day-number">18</span></span>
+                    <span class="day future"><span class="day-number">19</span></span>
+                    <span class="day future"><span class="day-number">20</span></span>
+                    <span class="day future"><span class="day-number">21</span></span>
+                    <span class="day future"><span class="day-number">22</span></span>
+                  </div>
+                  <div class="week">
+                    <span class="day future"><span class="day-number">23</span></span>
+                    <span class="day future"><span class="day-number">24</span></span>
+                    <span class="day future"><span class="day-number">25</span></span>
+                    <span class="day future"><span class="day-number">26</span></span>
+                    <span class="day future"><span class="day-number">27</span></span>
+                    <span class="day future"><span class="day-number">28</span></span>
+                    <span class="day future"><span class="day-number">29</span></span>
+                  </div>
+                  <div class="week">
+                    <span class="day future"><span class="day-number">30</span></span>
+                    <span></span><span></span><span></span><span></span><span></span><span></span>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <div class="action-bar">
+              <div class="primary-action">去打卡</div>
+            </div>
+
+            <nav class="tabbar">
+              <div class="tab-inner"><div class="tab active">当期</div><div class="tab">历史</div></div>
+            </nav>
+          </div>
+        </div>
+      </article>
+      <!-- 12 终止合同 -->
+      <!-- id: termination -->
+      <article id="screen-history" class="screen-card">
+        <div class="screen-meta">
+          <div class="screen-index">11 / HISTORY</div>
+          <div class="screen-name">历史 · 结算列表</div>
+          <p class="screen-desc">Header 默认收起，只保留合作切换和三项汇总；主体是结算 list，每条展示期数、起止时间、天数、工资和平均到岗时间。</p>
+        </div>
+        <div class="phone">
+          <div class="app">
+            <div class="app-scroll">
+              <section class="history-header" id="historyHeader">
+                <div class="history-tabs">
+                  <span class="history-tab active">当前合作</span>
+                  <span class="history-tab">2026上半年</span>
+                  <span class="history-tab">2025合作</span>
+                </div>
+
+                <div class="cooperation-summary">
+                  <div class="summary-cell">
+                    <div class="summary-cell-label">已结算</div>
+                    <div class="summary-cell-value" id="historyStageCount">2 期</div>
+                  </div>
+                  <div class="summary-cell">
+                    <div class="summary-cell-label">累计支付</div>
+                    <div class="summary-cell-value" id="historyPaid">¥16,000</div>
+                  </div>
+                  <div class="summary-cell">
+                    <div class="summary-cell-label">累计干了</div>
+                    <div class="summary-cell-value" id="historyDays">52 天</div>
+                  </div>
+                </div>
+
+                <div class="contract-toggle" id="contractToggle">
+                  <span class="contract-toggle-label">合同信息</span><span class="chevron">⌄</span>
+                </div>
+
+                <div class="contract-detail">
+                  <div class="info-grid">
+                    <div class="info-item info-wide">
+                      <div class="info-label">合作状态</div>
+                      <div class="info-value"><span class="status-pill">合作中</span></div>
+                    </div>
+                    <div class="info-item">
+                      <div class="info-label">合作定价</div>
+                      <div class="info-value">8000 元 / 26 天</div>
+                    </div>
+                    <div class="info-item">
+                      <div class="info-label">日薪</div>
+                      <div class="info-value">¥307.69 / 天</div>
+                    </div>
+                    <div class="info-item">
+                      <div class="info-label">开始日期</div>
+                      <div class="info-value">2026.08.12</div>
+                    </div>
+                    <div class="info-item">
+                      <div class="info-label">围栏半径</div>
+                      <div class="info-value">300 米</div>
+                    </div>
+                    <div class="info-item">
+                      <div class="info-label">雇主补录</div>
+                      <div class="info-value">1 天</div>
+                    </div>
+                    <div class="info-item">
+                      <div class="info-label">平均到岗</div>
+                      <div class="info-value">不含补录</div>
+                    </div>
+                    <div class="info-item info-wide">
+                      <div class="info-label">家庭地址</div>
+                      <div class="info-value">上海市黄浦区示范小区</div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="history-list" id="historyList">
+                <article class="record future-record">
+                  <div class="record-main">
+                    <div>
+                      <div class="record-stage">第 3 期</div>
+                      <div class="record-range">2026.11.01 至 2026.11.12</div>
+                    </div>
+                    <div class="record-amount">
+                      <div class="record-amount-value">¥3,692.31</div>
+                      <div class="record-amount-label">结算工资</div>
+                    </div>
+                  </div>
+                  <div class="record-facts">
+                    <div>
+                      <div class="record-fact-label">干了</div>
+                      <div class="record-fact-value">12 天</div>
+                    </div>
+                    <div>
+                      <div class="record-fact-label">平均到岗</div>
+                      <div class="record-fact-value">08:09</div>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="record">
+                  <div class="record-main">
+                    <div>
+                      <div class="record-stage">第 2 期</div>
+                      <div class="record-range">2026.09.11 至 2026.10.08</div>
+                    </div>
+                    <div class="record-amount">
+                      <div class="record-amount-value">¥8,000</div>
+                      <div class="record-amount-label">结算工资</div>
+                    </div>
+                  </div>
+                  <div class="record-facts">
+                    <div>
+                      <div class="record-fact-label">干了</div>
+                      <div class="record-fact-value">26 天</div>
+                    </div>
+                    <div>
+                      <div class="record-fact-label">平均到岗</div>
+                      <div class="record-fact-value">08:09</div>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="record">
+                  <div class="record-main">
+                    <div>
+                      <div class="record-stage">第 1 期</div>
+                      <div class="record-range">2026.08.12 至 2026.09.08</div>
+                    </div>
+                    <div class="record-amount">
+                      <div class="record-amount-value">¥8,000</div>
+                      <div class="record-amount-label">结算工资</div>
+                    </div>
+                  </div>
+                  <div class="record-facts">
+                    <div>
+                      <div class="record-fact-label">干了</div>
+                      <div class="record-fact-value">26 天</div>
+                    </div>
+                    <div>
+                      <div class="record-fact-label">平均到岗</div>
+                      <div class="record-fact-value">08:12</div>
+                    </div>
+                  </div>
+                </article>
+              </section>
+            </div>
+
+            <nav class="tabbar">
+              <div class="tab-inner">
+                <div class="tab">当期</div>
+                <div class="tab active">历史</div>
+              </div>
+            </nav>
+          </div>
+        </div>
+      </article>
+
+      <article id="screen-termination" class="screen-card">
+        <div class="screen-meta">
+          <div class="screen-index">12 / TERMINATION</div>
+          <div class="screen-name">雇主 · 终止合同</div>
+          <p class="screen-desc">终止是高风险动作。必须先完成当期结算；本期为 0 天时才允许直接终止。</p>
+        </div>
+        <div class="phone">
+          <div class="app">
+            <div class="flow-page termination">
+              <h1 class="flow-title">终止合同</h1>
+              <p class="flow-lead">终止后当前合作不能再打卡，但已确认的历史结算会保留。</p>
+
+              <section class="flow-card">
+                <h2 class="section-title">终止后将发生什么</h2>
+                <ul class="fact-list">
+                  <li>当前合作立即结束，不能再打卡</li>
+                  <li>已确认的结算历史继续保留</li>
+                  <li>你可以重新创建合作</li>
+                  <li>阿姨可以用新匹配码加入</li>
+                </ul>
+              </section>
+
+              <section class="flow-card">
+                <h2 class="section-title">当前状态</h2>
+                <div class="summary-rows">
+                  <div class="summary-row"><span>当前期数</span><strong>第 4 期</strong></div>
+                  <div class="summary-row"><span>本期已上工</span><strong>0 天</strong></div>
+                  <div class="summary-row"><span>历史已结算</span><strong>3 期</strong></div>
+                  <div class="summary-row"><span>累计支付</span><strong>¥19,692.31</strong></div>
+                </div>
+              </section>
+
+              <section class="flow-card">
+                <h2 class="section-title">终止原因</h2>
+                <div class="chips">
+                  <span class="chip selected">阿姨下户</span>
+                  <span class="chip">双方协商结束</span>
+                  <span class="chip">雇主不再用工</span>
+                  <span class="chip">其他</span>
+                </div>
+                <p class="note warning">如果本期还有未结算天数，需要先结算；存在待阿姨确认的结算时也不能终止。</p>
+                <div class="button-full danger">确认终止合同</div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 13 合作结束 -->
+      <article id="screen-ended" class="screen-card">
+        <div class="screen-meta">
+          <div class="screen-index">13 / ENDED</div>
+          <div class="screen-name">合作结束</div>
+          <p class="screen-desc">终态不给用户断崖，明确旧历史保留，并引导下一段合作。</p>
+        </div>
+        <div class="phone">
+          <div class="app">
+            <div class="flow-page">
+              <h1 class="flow-title">合作已结束</h1>
+              <p class="flow-lead">当前合作不能再打卡；已确认的结算记录会一直保留。</p>
+
+              <section class="ended-card">
+                <div class="ended-icon">✓</div>
+                <h2 class="ended-title">上一段合作已归档</h2>
+                <p class="ended-copy">双方已结算 3 期，累计干了 64 天，累计支付 ¥19,692.31。</p>
+
+                <div class="summary-rows" style="text-align:left">
+                  <div class="summary-row"><span>雇主下一步</span><strong>创建新合作</strong></div>
+                  <div class="summary-row"><span>阿姨下一步</span><strong>等待新匹配码</strong></div>
+                  <div class="summary-row"><span>历史记录</span><strong>双方继续可查</strong></div>
+                </div>
+
+                <div class="button-full">创建新合作</div>
+                <div class="secondary-button">输入新匹配码</div>
+                <div class="secondary-button">重新选择身份</div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 14 状态与兜底 -->
+      <article id="screen-states" class="screen-card">
+        <div class="screen-meta">
+          <div class="screen-index">14 / STATES</div>
+          <div class="screen-name">状态与兜底</div>
+          <p class="screen-desc">所有关键路径都必须有成功、失败、锁定、空态和网络兜底，不让用户掉进黑盒。</p>
+        </div>
+        <div class="phone">
+          <div class="app">
+            <div class="flow-page">
+              <h1 class="flow-title">状态与兜底</h1>
+              <p class="flow-lead">同一套反馈规范：先说结果，再说下一步，始终保留重试或返回入口。</p>
+
+              <section class="state-card">
+                <div class="state-title"><span>08:31 已记录</span><span class="state-badge success">打卡成功</span></div>
+                <p class="state-copy">今天已上工 1 天。同一天只能成功一次，按钮会保持置灰，避免重复操作。</p>
+              </section>
+
+              <section class="state-card">
+                <div class="state-title"><span>不在家庭围栏内</span><span class="state-badge warning">打卡失败</span></div>
+                <p class="state-copy">请到家庭位置后重试；若定位精度不足，提示到开阔处再试，不生成考勤。</p>
+              </section>
+
+              <section class="state-card">
+                <div class="state-title"><span>需要定位权限</span><span class="state-badge warning">权限引导</span></div>
+                <p class="state-copy">解释用途并提供“去开启”；用户拒绝后仍能查看历史，但不能打卡。</p>
+              </section>
+
+              <section class="state-card">
+                <div class="state-title"><span>待确认收款</span><span class="state-badge info">暂时锁定</span></div>
+                <p class="state-copy">阿姨确认前不能继续打卡；页面明确显示确认后新期从哪一天开始。</p>
+              </section>
+
+              <section class="state-card">
+                <div class="state-title"><span>网络不稳定</span><span class="state-badge warning">读取失败</span></div>
+                <p class="state-copy">保留已读取内容，提供重试；不自动清空本地状态，避免老年用户迷路。</p>
+              </section>
+
+              <section class="state-card">
+                <div class="state-title"><span>还没有结算记录</span><span class="state-badge">空态</span></div>
+                <p class="state-copy">说明结算会在双方确认后出现，并提供返回当期按钮，不显示空白页面。</p>
+              </section>
+            </div>
+          </div>
+        </div>
+      </article>
+
+    </section>
+
+    <section class="design-notes">
+      <h2>设计交付标准</h2>
+      <div class="notes-grid">
+        <div class="note-block">
+          <h3>真实视口</h3>
+          <p>外壳与屏幕分离，应用画面固定 375 × 812；后续按 1px = 2rpx 还原，不用外壳宽度评估字号。</p>
+        </div>
+        <div class="note-block">
+          <h3>字号与触控</h3>
+          <p>最小文字 12px / 24rpx；可点击控件至少 44px / 88rpx，主按钮 48px 以上。字重仅使用 400 / 600 / 700。</p>
+        </div>
+        <div class="note-block">
+          <h3>色彩语义</h3>
+          <p>绿色表示到岗和成功；红色保留给金额、支付与高风险；墨色用于 Tab 激活，避免红色语义过载。</p>
+        </div>
+        <div class="note-block">
+          <h3>日历事实</h3>
+          <p>当前期绿圈 + 时间；已结算日期用黄色圆圈和黄色时间；今天用红圈，不展示图例。</p>
+        </div>
+        <div class="note-block">
+          <h3>闭环样例</h3>
+          <p>第 3 期从 11.01 开始，已干 12 天；11.13 发起结算，截止 11.12；确认后第 4 期从 11.13 开始，当天可继续打卡。历史口径随确认动态更新。</p>
+        </div>
+        <div class="note-block">
+          <h3>补录规则</h3>
+          <p>只补当前未结算期、未打卡日期；范围为今天往前 30 天且不含今天；默认 09:00 和「前期补录」。</p>
+        </div>
+        <div class="note-block">
+          <h3>历史档案</h3>
+          <p>合同信息默认收起；主体是结算 list。每条展示期数、起止、天数、工资、平均到岗；平均到岗不含补录。</p>
+        </div>
+        <div class="note-block">
+          <h3>状态兜底</h3>
+          <p>成功、失败、权限、锁定、空态、弱网都先说结果，再说下一步；关键金额不得被 overflow 截断。</p>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div class="prototype-toast" id="prototypeToast"></div>
+  <script>
+    (() => {
+      const board = document.querySelector('#backfillBoard');
+      if (!board) return;
+
+      const days = Array.from(board.querySelectorAll('.board-day'));
+      const selectableDays = days.filter((day) => day.dataset.selectable === '1');
+      const status = document.querySelector('#selectionStatus');
+      const daysText = document.querySelector('#backfillDays');
+      const detailText = document.querySelector('#backfillDetail');
+      const confirmText = document.querySelector('#backfillConfirm');
+      const clearButton = document.querySelector('#clearBackfill');
+      const modeButtons = Array.from(document.querySelectorAll('.mode-button'));
+      let mode = 'range';
+      let rangeStart = null;
+      const selected = new Set(['11.09', '11.10']);
+      window.__backfillSelected = selected;
+
+      function normalizeDate(value) {
+        const [month, day] = value.split('.').map(Number);
+        return month * 100 + day;
+      }
+
+      function selectedNodes() {
+        return selectableDays.filter((day) => selected.has(day.dataset.date));
+      }
+
+      function render() {
+        selectableDays.forEach((day) => {
+          const isSelected = selected.has(day.dataset.date);
+          day.classList.toggle('selected', isSelected);
+          day.classList.remove('endpoint');
+        });
+
+        const nodes = selectedNodes();
+        if (nodes.length > 0) {
+          nodes[0].classList.add('endpoint');
+          nodes[nodes.length - 1].classList.add('endpoint');
+        }
+
+        const count = selected.size;
+        const first = nodes[0] ? nodes[0].dataset.date : '';
+        const last = nodes[nodes.length - 1] ? nodes[nodes.length - 1].dataset.date : '';
+        const rangeText = count > 1 ? `${first} - ${last}` : first;
+      status.textContent = rangeStart
+        ? `已选开始 ${rangeStart.dataset.date}，请点击结束日期`
+        : count ? `已选 ${rangeText} · 共 ${count} 天` : '请点击可选择日期';
+        daysText.textContent = `将补 ${count} 天`;
+        detailText.textContent = count
+          ? '统一 09:00 · 前期补录'
+          : '请先选择需要补录的日期';
+        confirmText.textContent = '补录';
+        confirmText.style.opacity = count ? '1' : '.55';
+      }
+
+      function setRange(startDay, endDay) {
+        const from = Math.min(normalizeDate(startDay.dataset.date), normalizeDate(endDay.dataset.date));
+        const to = Math.max(normalizeDate(startDay.dataset.date), normalizeDate(endDay.dataset.date));
+        selected.clear();
+        selectableDays.forEach((day) => {
+          const value = normalizeDate(day.dataset.date);
+          if (value >= from && value <= to) selected.add(day.dataset.date);
+        });
+      }
+
+      days.forEach((day) => {
+        day.addEventListener('click', () => {
+          if (day.dataset.selectable !== '1') return;
+          const date = day.dataset.date;
+
+          if (mode === 'single') {
+            if (selected.has(date)) selected.delete(date);
+            else selected.add(date);
+            rangeStart = null;
+          } else if (!rangeStart) {
+            selected.clear();
+            selected.add(date);
+            rangeStart = day;
+            status.textContent = `已选开始 ${date}，请点击结束日期`;
+          } else {
+            setRange(rangeStart, day);
+            rangeStart = null;
+          }
+          render();
+        });
+      });
+
+      modeButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          mode = button.dataset.mode;
+          rangeStart = null;
+          selected.clear();
+          modeButtons.forEach((item) => item.classList.toggle('active', item === button));
+          render();
+        });
+      });
+
+      clearButton.addEventListener('click', () => {
+        selected.clear();
+        rangeStart = null;
+        render();
+      });
+
+      document.querySelectorAll('.reason-quick .chip').forEach((chip) => {
+        chip.addEventListener('click', () => {
+          chip.parentElement.querySelectorAll('.chip').forEach((item) => {
+            item.classList.toggle('selected', item === chip);
+          });
+        });
+      });
+
+      render();
+    })();
+
+    (() => {
+      const historyHeader = document.querySelector('#historyHeader');
+      if (!historyHeader) return;
+      const contractToggle = historyHeader.querySelector('#contractToggle');
+      contractToggle.addEventListener('click', () => {
+        historyHeader.classList.toggle('expanded');
+      });
+      historyHeader.querySelectorAll('.history-tab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+          historyHeader.querySelectorAll('.history-tab').forEach((item) => {
+            item.classList.toggle('active', item === tab);
+          });
+        });
+      });
+    })();
+
+    (() => {
+      const steps = Array.from(document.querySelectorAll('.flow-step'));
+      const cards = Array.from(document.querySelectorAll('.screen-card'));
+      const stateText = document.querySelector('#flowState');
+      const stateNames = new Map(steps.map((step) => [step.dataset.screen, step.textContent.replace(/^\d+\s*/, '')]));
+
+      function goTo(screen, sourceElement = null) {
+        const target = document.querySelector(`#screen-${screen}`);
+        if (!target) return;
+        cards.forEach((card) => card.classList.toggle('active', card === target));
+        steps.forEach((step) => step.classList.toggle('active', step.dataset.screen === screen));
+        stateText.textContent = `当前：${stateNames.get(screen) || screen}`;
+        if (sourceElement) {
+          sourceElement.style.transform = 'scale(.98)';
+          setTimeout(() => { sourceElement.style.transform = ''; }, 110);
+        }
+        target.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+
+      steps.forEach((step) => {
+        step.addEventListener('click', () => goTo(step.dataset.screen, step));
+      });
+
+      const screenRoutes = {
+        onboarding: { '我是雇主': 'create', '我是阿姨': 'join' },
+        create: { '创建合作': 'waiting' },
+        waiting: {
+          '复制匹配码': 'join',
+          '返回修改': 'create',
+          '重新选择身份': 'onboarding'
+        },
+        join: {
+          '查看合作信息': 'join',
+          '确认匹配': 'employee-current',
+          '重新选择身份': 'onboarding'
+        },
+        'employer-current': {
+          '结算': 'settlement',
+          '补录': 'backfill',
+          '终止': 'termination'
+        },
+        backfill: { '补录': 'employer-current' },
+        settlement: { '发给阿姨确认': 'pending-settlement' },
+        'pending-settlement': {
+          '确认收到': 'new-stage',
+          '金额不对': 'employer-current'
+        },
+        termination: { '确认终止合同': 'ended' },
+        ended: {
+          '创建新合作': 'create',
+          '输入新匹配码': 'join',
+          '重新选择身份': 'onboarding'
+        }
+      };
+
+      document.addEventListener('click', (event) => {
+        const action = event.target.closest([
+          '.role-button',
+          '.button-full',
+          '.secondary-button',
+          '.employer-action',
+          '.backfill-confirm',
+          '.pending-primary',
+          '.pending-secondary'
+        ].join(','));
+        if (!action) return;
+        const card = action.closest('.screen-card');
+        if (!card || !card.id) return;
+        const screen = card.id.replace('screen-', '');
+        const routes = screenRoutes[screen];
+        if (!routes) return;
+        const label = action.textContent.trim();
+        const target = routes[label];
+        if (!target) return;
+        const backfillSelected = window.__backfillSelected || new Set();
+        if (screen === 'backfill' && label === '补录' && backfillSelected.size > 0) {
+          document.querySelector('#screen-employee-current .metric-number').textContent = '12';
+          document.querySelector('#screen-employer-current .metric-number').textContent = '12';
+          document.querySelector('#screen-employee-current .stage-subline').textContent = '累计工作 64 天 · 含补录 3 天';
+          ['#screen-employee-current', '#screen-employer-current'].forEach((selector) => {
+            Array.from(document.querySelectorAll(`${selector} .day`)).forEach((day) => {
+              const number = day.querySelector('.day-number');
+              if (!number || !['9', '10'].includes(number.textContent.trim())) return;
+              day.className = 'day checked';
+              day.innerHTML = '<span class="dot"></span><span class="day-number">' + number.textContent.trim() + '</span><span class="day-time">09:00</span>';
+            });
+          });
+          document.querySelectorAll('#backfillBoard .board-day[data-selectable]').forEach((day) => {
+            if (!backfillSelected.has(day.dataset.date)) return;
+            day.classList.remove('selected', 'endpoint');
+            day.classList.add('disabled');
+            day.removeAttribute('data-selectable');
+          });
+          backfillSelected.clear();
+          document.querySelector('#selectionStatus').textContent = '本期内暂无可补日期';
+          document.querySelector('#backfillDays').textContent = '将补 0 天';
+          document.querySelector('#backfillDetail').textContent = '统一 09:00 · 前期补录';
+        }
+        if (screen === 'pending-settlement' && label === '确认收到') {
+          document.querySelector('#historyList').classList.add('confirmed');
+          document.querySelector('#historyStageCount').textContent = '3 期';
+          document.querySelector('#historyPaid').textContent = '¥19,692.31';
+          document.querySelector('#historyDays').textContent = '64 天';
+        }
+        const messages = {
+          onboarding: { '我是雇主': '已选择雇主身份', '我是阿姨': '已选择阿姨身份' },
+          create: { '创建合作': '合作已创建，匹配码已生成' },
+          waiting: { '复制匹配码': '匹配码已复制，可发给阿姨' },
+          join: { '确认匹配': '匹配成功，进入当期记工' },
+          backfill: { '补录': '补录已提交，日历已更新' },
+          settlement: { '发给阿姨确认': '已发送给阿姨确认' },
+          'pending-settlement': {
+            '确认收到': '已确认收款，新期从今天开始',
+            '金额不对': '已通知雇主处理，暂不能打卡'
+          },
+          termination: { '确认终止合同': '合同已终止，历史已归档' }
+        };
+        const message = messages[screen] && messages[screen][label];
+        if (message) {
+          const toast = document.querySelector('#prototypeToast');
+          toast.textContent = message;
+          toast.classList.add('show');
+          clearTimeout(window.__prototypeToastTimer);
+          window.__prototypeToastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+        }
+        goTo(target, action);
+      });
+
+      goTo('onboarding');
+    })();
+  </script>
+</body>
+</html>

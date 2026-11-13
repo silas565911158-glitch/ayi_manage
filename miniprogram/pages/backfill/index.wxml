@@ -1,0 +1,77 @@
+<view class="page flow-page backfill-page">
+  <view wx:if="{{loading}}" class="quiet">正在读取……</view>
+
+  <block wx:else>
+    <view class="flow-title">补录</view>
+    <view class="flow-lead">只能补当前期内、最近30天且尚未打卡的日期；今天不能补录。</view>
+
+    <view class="flow-card">
+      <view class="scope-row">
+        <view>
+          <view class="scope-label">可补范围</view>
+          <view class="scope-value">{{earliestText}} 至 {{latestText}}</view>
+        </view>
+        <button class="small-button" hover-class="button-hover" bindtap="clearSelection">清空重选</button>
+      </view>
+
+      <view class="mode-row">
+        <button class="mode-button {{mode === 'range' ? 'active' : ''}}" data-mode="range" bindtap="setMode">连续日期</button>
+        <button class="mode-button {{mode === 'single' ? 'active' : ''}}" data-mode="single" bindtap="setMode">单日修改</button>
+      </view>
+      <view class="selection-status">{{selectionText}}</view>
+
+      <view wx:for="{{board.boards}}" wx:for-item="month" wx:key="title" class="month-board">
+        <view class="board-title">{{month.title}}</view>
+        <view class="weekday-row"><text>一</text><text>二</text><text>三</text><text>四</text><text>五</text><text>六</text><text>日</text></view>
+        <view wx:for="{{month.weeks}}" wx:for-item="week" wx:for-index="weekIndex" wx:key="weekIndex" class="board-week">
+          <view
+            wx:for="{{week}}"
+            wx:for-item="day"
+            wx:key="index"
+            class="board-day {{day.selected ? 'selected' : ''}} {{day.eligible ? '' : 'disabled'}}"
+            data-date="{{day.date}}"
+            bindtap="selectDay"
+          >{{day.day || ''}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="flow-card">
+      <view class="config-row">
+        <picker mode="time" value="{{workTime}}" bindchange="changeTime">
+          <view class="time-box">
+            <text>统一时间</text>
+            <view class="time-value">{{workTime}}</view>
+          </view>
+        </picker>
+        <view class="reason-box">
+          <view class="field-label">原因</view>
+          <scroll-view scroll-x class="reason-scroll">
+            <view class="reason-list">
+              <button
+                wx:for="{{reasons}}"
+                wx:key="*this"
+                class="reason-chip {{reason === item ? 'selected' : ''}}"
+                data-reason="{{item}}"
+                bindtap="selectReason"
+              >{{item}}</button>
+            </view>
+          </scroll-view>
+        </view>
+      </view>
+      <textarea
+        wx:if="{{reason === '其他'}}"
+        class="other-input"
+        value="{{otherReason}}"
+        bindinput="inputOtherReason"
+        maxlength="120"
+        placeholder="填写具体原因"
+      />
+    </view>
+
+    <button class="button-primary" disabled="{{submitting || selectedCount < 1}}" bindtap="submit">
+      {{submitting ? '正在补录…' : '补录'}}
+    </button>
+    <view wx:if="{{error}}" class="status-error">{{error}}</view>
+  </block>
+</view>

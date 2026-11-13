@@ -5,7 +5,7 @@
   left: 0;
   display: flex;
   box-sizing: border-box;
-  height: calc(112rpx + env(safe-area-inset-bottom));
+  height: calc(96rpx + env(safe-area-inset-bottom));
   border-top: 2rpx solid #E4D8C7;
   background: #FFFFFF;
   box-shadow: 0 -8rpx 24rpx rgba(34, 38, 45, 0.06);
@@ -16,7 +16,7 @@
 .tab-inner {
   display: flex;
   width: 100%;
-  height: 112rpx;
+  height: 96rpx;
 }
 
 .tab-item {
@@ -25,7 +25,7 @@
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  height: 112rpx;
+  height: 96rpx;
   color: #756E63;
   font-size: 34rpx;
   font-weight: 600;
@@ -37,6 +37,6 @@
 }
 
 .tab-item.active {
-  color: #C9402A;
+  color: #22262D;
   font-weight: 700;
 }

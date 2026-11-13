@@ -62,6 +62,16 @@ class MemoryRepository {
     );
   }
 
+  listContractsForParticipant(openid) {
+    return this.contracts
+      .filter((contract) => contract.employerOpenid === openid || contract.employeeOpenid === openid)
+      .sort((left, right) => {
+        if (left.status === 'active') return -1;
+        if (right.status === 'active') return 1;
+        return new Date(right.endedAt || right.createdAt || 0) - new Date(left.endedAt || left.createdAt || 0);
+      });
+  }
+
   findContractByInviteCode(inviteCode) {
     return this.contracts.find((contract) => contract.inviteCode === inviteCode) || null;
   }
@@ -202,6 +212,12 @@ class MemoryRepository {
       .sort((left, right) => String(left.localDate).localeCompare(String(right.localDate)));
   }
 
+  listCheckinsByContract(contractId) {
+    return this.checkins
+      .filter((checkin) => checkin.contractId === contractId)
+      .sort((left, right) => String(left.localDate).localeCompare(String(right.localDate)));
+  }
+
   getCheckin(cycleId, localDate) {
     return this.checkins.find((checkin) => checkin.cycleId === cycleId && checkin.localDate === localDate) || null;
   }
@@ -214,6 +230,30 @@ class MemoryRepository {
     if (this.getCheckin(checkin.cycleId, checkin.localDate)) throw new Error('DUPLICATE_CHECKIN');
     this.checkins.push(checkin);
     return checkin;
+  }
+
+  insertBackfillCheckins({ contractId, stageId, checkins }) {
+    const contract = this.contracts.find((item) => item._id === contractId);
+    if (!contract || contract.status !== 'active' || !contract.employeeOpenid) {
+      const error = new Error('CONTRACT_NOT_BOUND');
+      error.code = 'CONTRACT_NOT_BOUND';
+      throw error;
+    }
+    const stage = this.cycles.find((item) => item._id === stageId);
+    if (!stage || stage.contractId !== contractId || stage.status !== 'open') {
+      const error = new Error('NO_OPEN_STAGE');
+      error.code = 'NO_OPEN_STAGE';
+      throw error;
+    }
+    checkins.forEach((checkin) => {
+      if (this.getContractCheckin(contractId, checkin.localDate)) {
+        const error = new Error('CHECKIN_ALREADY_EXISTS');
+        error.code = 'CHECKIN_ALREADY_EXISTS';
+        throw error;
+      }
+    });
+    checkins.forEach((checkin) => this.insertCheckin(checkin));
+    return checkins;
   }
 
   insertAttempt(attempt) {
@@ -317,6 +357,31 @@ class MemoryRepository {
     this.settlements.push(settlement);
     this.insertCycle(nextStage);
     return { settlementRequest: currentRequest, settlement, nextStage };
+  }
+
+  terminateContract({ contractId, stageId, contractPatch, cyclePatch, employerOpenid, employeeOpenid }) {
+    const contract = this.contracts.find((item) => item._id === contractId);
+    if (!contract || contract.status !== 'active' || contract.employerOpenid !== employerOpenid) {
+      const error = new Error('CONTRACT_NOT_FOUND');
+      error.code = 'CONTRACT_NOT_FOUND';
+      throw error;
+    }
+    if (!contract.employeeOpenid || contract.employeeOpenid !== employeeOpenid) {
+      const error = new Error('CONTRACT_NOT_BOUND');
+      error.code = 'CONTRACT_NOT_BOUND';
+      throw error;
+    }
+    const stage = this.cycles.find((item) => item._id === stageId);
+    if (!stage || stage.contractId !== contractId || stage.status !== 'open') {
+      const error = new Error('NO_OPEN_STAGE');
+      error.code = 'NO_OPEN_STAGE';
+      throw error;
+    }
+    Object.assign(contract, contractPatch);
+    Object.assign(stage, cyclePatch);
+    this.updateUser(employerOpenid, { activeContractId: null });
+    this.updateUser(employeeOpenid, { activeContractId: null });
+    return { contract, stage };
   }
 
 }

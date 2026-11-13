@@ -24,7 +24,9 @@ describe('attendance backend workflow', () => {
 
     await expect(employee.call('createContract', validContract())).rejects.toMatchObject({ code: 'FORBIDDEN' });
     const joined = await employee.call('joinContract', { inviteCode: created.data.inviteCode });
-    expect(joined.data.contract.employeeOpenid).toBe('mock-employee');
+    expect(joined.data.contract.employeeBound).toBe(true);
+    expect(joined.data.contract).not.toHaveProperty('employeeOpenid');
+    expect(joined.data.contract).not.toHaveProperty('employerOpenid');
     await expect(employee.call('joinContract', { inviteCode: created.data.inviteCode })).rejects.toMatchObject({ code: 'EMPLOYEE_ALREADY_JOINED' });
 
     const challengeResult = await employee.call('createCheckinChallenge');
@@ -176,7 +178,7 @@ describe('attendance backend workflow', () => {
     expect(unmatched.data.contract).toBeNull();
     await employee.call('joinContract', { inviteCode: created.data.inviteCode });
     const matched = await employer.call('getCurrentState');
-    expect(matched.data.contract.employeeOpenid).toBe('mock-employee');
+    expect(matched.data.contract.employeeBound).toBe(true);
   });
 
   test('lets the employer revise an unbound cooperation and its first stage', async () => {

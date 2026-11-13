@@ -52,7 +52,7 @@ Page({
     const role = state.user.role;
     this.setData({ routing: true });
     if (state.contract) {
-      if (role === 'employer' && !state.contract.employeeOpenid) {
+      if (role === 'employer' && !state.contract.employeeBound) {
         wx.redirectTo({ url: '/pages/employer/waiting/index' });
         return;
       }
