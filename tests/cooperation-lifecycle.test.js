@@ -108,7 +108,7 @@ describe('cooperation lifecycle', () => {
     const state = await employee.call('getCurrentState');
     expect(state.data.currentStage).toMatchObject({ days: 3 });
     expect(state.data.backfill).toMatchObject({
-      earliestLocalDate: '2026-11-01',
+      earliestLocalDate: '2026-10-14',
       latestLocalDate: '2026-11-12',
       defaultWorkTime: '09:00',
       defaultReason: '前期补录'
@@ -139,6 +139,51 @@ describe('cooperation lifecycle', () => {
       workTime: '09:00',
       reason: '前期补录'
     })).rejects.toMatchObject({ code: 'CHECKIN_ALREADY_EXISTS' });
+  });
+
+  test('a contract created today can backfill work from the previous 30 days', async () => {
+    let now = new Date('2026-11-19T01:00:00.000Z');
+    const backend = new MockBackend({ storage: new MemoryStorage(), now: () => now });
+    const employer = backend.as('mock-employer');
+    const employee = backend.as('mock-employee');
+    await employer.call('bootstrapUser', { role: 'employer' });
+    await employee.call('bootstrapUser', { role: 'employee' });
+    const created = await employer.call('createContract', validContract({ startDate: '2026-11-19' }));
+    await employee.call('joinContract', { inviteCode: created.data.inviteCode });
+
+    const initialState = await employer.call('getCurrentState');
+    expect(initialState.data.backfill).toMatchObject({
+      earliestLocalDate: '2026-10-20',
+      latestLocalDate: '2026-11-18'
+    });
+
+    const result = await employer.call('createBackfillCheckins', {
+      localDates: ['2026-11-10', '2026-11-11'],
+      workTime: '09:00',
+      reason: '前期补录'
+    });
+    expect(result.data.checkins).toHaveLength(2);
+
+    const state = await employer.call('getCurrentState');
+    expect(state.data.contract.startDate).toBe('2026-11-19');
+    expect(state.data.currentStage).toMatchObject({
+      startLocalDate: '2026-11-10',
+      days: 2,
+      backfillDays: 2
+    });
+  });
+
+  test('history years ignore unmatched cancelled cooperations', async () => {
+    const now = new Date('2026-11-19T01:00:00.000Z');
+    const backend = new MockBackend({ storage: new MemoryStorage(), now: () => now });
+    const employer = backend.as('mock-employer');
+    await employer.call('bootstrapUser', { role: 'employer' });
+    await employer.call('createContract', validContract({ startDate: '2026-11-19' }));
+    await employer.call('resetUnmatchedCooperation');
+
+    const history = await employer.call('listHistory');
+    expect(history.data.years).toEqual([]);
+    expect(history.data.contracts).toHaveLength(1);
   });
 
   test('employer terminates an archived contract and both parties can start a new cooperation', async () => {
@@ -181,9 +226,28 @@ describe('cooperation lifecycle', () => {
 
     const nextContract = await employer.call('createContract', validContract({ startDate: '2026-11-20' }));
     await employee.call('joinContract', { inviteCode: nextContract.data.inviteCode });
+    const nextState = await employer.call('getCurrentState');
+    expect(nextState.data.lifetimeSummary).toEqual({
+      settledStages: 1,
+      totalPaidAmount: 307.69,
+      totalSettledDays: 1
+    });
+    expect(nextState.data.lifetimeWorkDays).toBe(1);
     const nextHistory = await employer.call('listHistory');
     expect(nextHistory.data.contracts).toHaveLength(2);
     expect(nextHistory.data.contract).toMatchObject({ status: 'active' });
+    expect(nextHistory.data.years).toEqual([
+      {
+        year: 2026,
+        summary: { settledStages: 1, totalPaidAmount: 307.69, totalSettledDays: 1 },
+        contracts: [
+          expect.objectContaining({
+            contract: expect.objectContaining({ status: 'ended' }),
+            summary: { settledStages: 1, totalPaidAmount: 307.69, totalSettledDays: 1 }
+          })
+        ]
+      }
+    ]);
   });
 });
 

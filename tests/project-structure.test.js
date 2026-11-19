@@ -88,7 +88,7 @@ describe('project structure', () => {
     const families = styles.flatMap((style) => style.match(/font-family:\s*([^;]+);/g) || []);
     const sizes = styles.flatMap((style) => style.match(/font-size:\s*(\d+)rpx/g) || [])
       .map((item) => item.match(/(\d+)rpx$/)[1]);
-    expect(new Set(sizes)).toEqual(new Set(['24', '26', '28', '30', '32', '34', '38', '40', '42', '44', '48', '50', '68', '72']));
+    expect(new Set(sizes)).toEqual(new Set(['24', '26', '28', '30', '32', '34', '38', '40', '42', '44', '48', '72']));
     expect(new Set(weights)).toEqual(new Set(['400', '600', '700']));
     expect(families).toHaveLength(1);
     expect(families[0]).toContain('-apple-system');
@@ -158,6 +158,9 @@ describe('project structure', () => {
     expect(currentWxml.indexOf('class="calendar-panel"'))
       .toBeLessThan(currentWxml.indexOf('class="bottom-action-bar"'));
     expect(currentJs).toContain('checkingIn: false');
+    expect(currentJs).toContain('locationPermissionDenied');
+    expect(currentJs).toContain('wx.openSetting');
+    expect(currentWxml).toContain('openLocationSetting');
     expect(currentJs).toContain('bottomCheckinText: \'\'');
     expect(currentJs).toContain('bottomCheckinDisabled: false');
     expect(currentJs).toContain('已打卡');
@@ -165,7 +168,7 @@ describe('project structure', () => {
     expect(currentWxml).toContain('bindtap="goSettlement"');
     expect(currentWxml).not.toContain('flat-action-button');
     expect(currentWxml).toContain('{{totalPaidCompactText}}');
-    expect(currentWxml).toContain('累计支付 {{state.settlementSummary.settledStages}} 期');
+    expect(currentWxml).toContain('累计支付 {{state.lifetimeSummary.settledStages}} 期');
     expect(currentWxml).toContain('cumulativeWorkText');
     expect(currentWxml).not.toContain('quick-links');
     expect(currentWxml).toContain('auxiliary-panel');
@@ -241,26 +244,41 @@ describe('project structure', () => {
     expect(settlementWxss).toContain('padding: 30rpx');
     expect(settlementWxss).toContain('border-radius: 32rpx');
     expect(settlementWxss).toContain('.fact-row > view');
-    expect(settlementWxss).toContain('width: 156rpx');
+    expect(settlementWxss).not.toContain('width: 156rpx');
+    expect(settlementWxml).toContain('转账截图（必填，{{images.length}}/3）');
+    expect(settlementWxml).toContain('catchtap="removeImage"');
+    expect(settlementWxml).toContain('class="add-image"');
+    expect(settlementWxml).not.toContain('<button wx:if="{{images.length < 3}}"');
+    expect(settlementWxss).toContain('width: 192rpx');
+    expect(settlementWxss).toContain('height: 192rpx');
+    expect(settlementWxss).toContain('flex: 0 0 calc((100% - 32rpx) / 3)');
     expect(settlementJs).toContain('/pages/settlement-status/index');
     expect(settlementStatusWxml).toContain('bindtap="confirmSettlement"');
     expect(settlementStatusWxml).toContain('bindtap="disputeSettlement"');
     expect(settlementStatusWxml).toContain('bindtap="cancelSettlement"');
     expect(settlementStatusJs).toContain('confirmSettlementRequest');
+    expect(settlementStatusWxml).toContain('nextStageStartText');
+    expect(settlementStatusJs).toContain('nextStageStartText');
     expect(settlementWxss).not.toContain('right: -12rpx');
     expect(settlementWxss).not.toContain('top: -12rpx');
     expect(historyWxml).toContain('合同信息');
     expect(historyWxml).toContain('平均到岗');
-    expect(historyWxml).toContain('contract-tabs');
+    expect(historyWxml).toContain('history-tabs');
+    expect(historyWxml).toContain('当前');
+    expect(historyWxml).toContain('contract-group');
     expect(historyWxml).toContain('累计干了');
     expect(historyJs).toContain('USER_NOT_FOUND');
     expect(historyWxml).toContain('结算工资');
-    expect(historyWxml).toContain('bindtap="toggleContract"');
+    expect(historyWxml).toContain('bindtap="toggleContractInfo"');
+    expect(historyWxml).toContain('data-settlement-id');
+    expect(historyJs).toContain('findSettlementProofs');
     expect(historyWxss).toContain('height: 88rpx');
-    expect(historyWxss).toContain('.contract-toggle-chevron');
+    expect(historyWxss).toContain('.history-tabs');
+    expect(historyWxss).toContain('.history-tab.active');
+    expect(historyWxss).toContain('.contract-toggle-icon');
     expect(historyWxss).toContain('.status-pill');
     expect(historyWxml).toContain('class="info-row"');
-    expect(historyWxml).toContain('{{dailySalaryText}} / 天');
+    expect(historyWxml).toContain('contract.dailySalaryText}} / 天');
     expect(historyWxss).not.toContain('.info-grid');
     expect(historyWxss).toContain('border-radius: 32rpx');
     expect(historyWxss).toContain('width: 94rpx');
@@ -289,6 +307,10 @@ describe('project structure', () => {
     expect(backfillWxss).toContain('width: 308rpx');
     expect(backfillWxss).toContain('min-height: 88rpx');
     expect(backfillWxss).toContain('padding: 28rpx');
+    expect(backfillWxml).toContain('近30天暂无可补日期');
+    expect(backfillWxml).not.toContain('scroll-x');
+    expect(backfillWxss).toContain('.board-day.range-start');
+    expect(backfillWxss).toContain('.board-day.range-end');
 
     expect(terminationWxml).toContain('终止后将发生什么');
     expect(terminationWxml).toContain('当前状态');

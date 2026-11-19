@@ -103,23 +103,22 @@
   justify-content: center;
   min-width: 0;
   overflow: hidden;
-  height: 84rpx;
-  line-height: 84rpx;
+  height: 52rpx;
+  line-height: 52rpx;
 }
 
 .metric-value {
   color: #FFFFFF;
-  font-size: 68rpx;
+  font-size: 40rpx;
   font-weight: 700;
-  line-height: 68rpx;
+  line-height: 48rpx;
   white-space: nowrap;
 }
 
 .metric-value.amount {
   max-width: 100%;
-  font-size: 50rpx;
-  line-height: 60rpx;
-  letter-spacing: -0.04rpx;
+  font-size: 40rpx;
+  line-height: 48rpx;
 }
 
 .metric-unit {
@@ -408,6 +407,33 @@
   font-size: 30rpx;
 }
 
+.stage-error-copy {
+  line-height: 42rpx;
+}
+
+.location-setting-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 232rpx;
+  min-height: 76rpx;
+  margin: 14rpx 0 0;
+  padding: 0 20rpx;
+  border-radius: 18rpx;
+  background: #FFFFFF;
+  color: #C9402A;
+  font-size: 28rpx;
+  font-weight: 700;
+  line-height: 76rpx;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.location-setting-button::after {
+  border: 0;
+}
+
 .calendar-panel {
   flex: 1;
   min-height: 0;
@@ -613,7 +639,7 @@
   width: 12rpx;
   height: 12rpx;
   border-radius: 50%;
-  background: #1B7F5C;
+  background: #C9402A;
   box-shadow: 0 0 0 4rpx #FFFDFA;
 }
 
@@ -635,10 +661,24 @@
 }
 
 .day-cell.checked .day-number {
+  border-color: rgba(201, 64, 42, 0.52);
+  background: #FFF0EB;
+  color: #B23823;
+  font-weight: 700;
+}
+
+.day-cell.checked .day-time {
+  color: #B23823;
+}
+
+.day-cell.checked.backfill .day-number {
   border-color: rgba(27, 127, 92, 0.48);
   background: #E4F3ED;
   color: #146247;
-  font-weight: 700;
+}
+
+.day-cell.checked.backfill .day-time {
+  color: #146247;
 }
 
 .day-cell.settled {
@@ -661,7 +701,7 @@
 }
 
 .day-cell.today .day-number {
-  border-color: #C9402A;
+  box-shadow: 0 0 0 6rpx rgba(201, 64, 42, 0.16);
 }
 
 .day-cell.outside,

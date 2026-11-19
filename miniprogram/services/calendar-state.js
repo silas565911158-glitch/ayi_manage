@@ -16,7 +16,7 @@ function buildCalendarMonth({
 }) {
   const checkedMap = buildCheckinMap(checkinRecords.length ? checkinRecords : checkinDates);
   const settledMap = buildCheckinMap(settledRecords.length ? settledRecords : settledDates);
-  const firstDay = new Date(`${toLocalDateKey(year, month, 1)}T00:00:00+08:00`);
+  const firstDay = new Date(Date.UTC(year, month - 1, 1));
   const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
   const weekdayOffset = (firstDay.getUTCDay() + 6) % 7;
   const cells = Array.from({ length: weekdayOffset }, () => ({
@@ -24,6 +24,7 @@ function buildCalendarMonth({
     day: null,
     withinStage: false,
     checkedIn: false,
+    backfill: false,
     settled: false,
     markText: '',
     timeText: '',
@@ -44,6 +45,7 @@ function buildCalendarMonth({
       day,
       withinStage,
       checkedIn,
+      backfill: checkedIn && record.source === 'employer_backfill',
       settled,
       markText: '',
       timeText: record ? record.time : '',
@@ -60,6 +62,7 @@ function buildCalendarMonth({
       day: null,
       withinStage: false,
       checkedIn: false,
+      backfill: false,
       settled: false,
       markText: '',
     timeText: '',
@@ -123,4 +126,20 @@ function getCalendarNavigation({ startLocalDate = '', todayLocalDate = '', year,
   };
 }
 
-module.exports = { buildCalendarMonth, getCalendarNavigation, toLocalDateKey };
+function getInitialCalendarMonth({ startLocalDate = '', todayLocalDate = '', checkinRecords = [] }) {
+  const latestCheckinDate = checkinRecords
+    .map((item) => (typeof item === 'string' ? item : item && item.localDate))
+    .filter(Boolean)
+    .sort((left, right) => left.localeCompare(right))
+    .pop() || '';
+  const focusDate = latestCheckinDate || (startLocalDate > todayLocalDate ? startLocalDate : todayLocalDate);
+  const [year, month] = focusDate.split('-').map(Number);
+  return { year, month };
+}
+
+module.exports = {
+  buildCalendarMonth,
+  getCalendarNavigation,
+  getInitialCalendarMonth,
+  toLocalDateKey
+};

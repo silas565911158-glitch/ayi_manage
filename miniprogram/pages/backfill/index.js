@@ -50,7 +50,9 @@ Page({
       earliestLocalDate: backfill.earliestLocalDate,
       latestLocalDate: backfill.latestLocalDate,
       eligibleLocalDates: backfill.eligibleLocalDates || [],
-      selectedLocalDates
+      checkedLocalDates: backfill.checkedLocalDates || [],
+      selectedLocalDates,
+      mode: this.data.mode
     });
     const count = selectedLocalDates.length;
     this.setData({
@@ -71,8 +73,7 @@ Page({
 
   setMode(event) {
     const mode = event.currentTarget.dataset.mode;
-    this.setData({ mode, board: { ...this.data.board, selectedLocalDates: [] } });
-    this.updateBoard(this.data.state, []);
+    this.setData({ mode }, () => this.updateBoard(this.data.state, []));
   },
 
   selectDay(event) {

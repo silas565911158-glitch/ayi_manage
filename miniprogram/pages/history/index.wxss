@@ -4,44 +4,47 @@
 }
 
 .history-header {
-  padding: 24rpx;
+  padding: 20rpx;
   border: 2rpx solid #E4D8C7;
   border-radius: 32rpx;
   background: #FFFDFA;
   box-shadow: 0 10rpx 30rpx rgba(34, 38, 45, 0.06);
 }
 
-.contract-tabs {
+.history-tabs {
   width: 100%;
-  height: 88rpx;
-  margin-bottom: 20rpx;
+  height: 104rpx;
+  box-sizing: border-box;
+  padding: 8rpx;
+  border-radius: 999rpx;
+  background: #F4EDE1;
   white-space: nowrap;
 }
 
-.contract-tab-list {
+.history-tab-list {
   display: flex;
-  gap: 14rpx;
+  min-width: 100%;
 }
 
-.contract-tab {
-  display: inline-flex;
+.history-tab {
+  display: flex;
   align-items: center;
   justify-content: center;
+  flex: 1 0 auto;
+  min-width: 176rpx;
   height: 88rpx;
-  padding: 0 20rpx;
-  border: 2rpx solid #E4D8C7;
   border-radius: 999rpx;
-  background: #FFFFFF;
   color: #6B6459;
-  font-size: 24rpx;
+  font-size: 26rpx;
   font-weight: 700;
   line-height: 88rpx;
+  text-align: center;
 }
 
-.contract-tab.active {
-  border-color: #1B7F5C;
-  background: #E4F3ED;
+.history-tab.active {
+  background: #FFFFFF;
   color: #146247;
+  box-shadow: 0 6rpx 18rpx rgba(34, 38, 45, 0.10);
 }
 
 .summary-grid {
@@ -72,41 +75,92 @@
   font-variant-numeric: tabular-nums;
 }
 
-.contract-toggle {
-  position: relative;
+.contract-group {
+  margin-top: 20rpx;
+  padding: 24rpx;
+  border: 2rpx solid #E4D8C7;
+  border-radius: 32rpx;
+  background: #FFFDFA;
+  box-shadow: 0 10rpx 30rpx rgba(34, 38, 45, 0.06);
+}
+
+.group-title {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 88rpx;
-  margin: 18rpx 0 0;
-  padding: 0;
-  border: 2rpx solid #E4D8C7;
-  border-radius: 20rpx;
-  background: #FFFFFF;
-  color: #555047;
+  justify-content: space-between;
+  gap: 20rpx;
+  color: #22262D;
+  font-size: 30rpx;
+  font-weight: 700;
+  line-height: 40rpx;
+}
+
+.group-status {
+  flex: 0 0 auto;
+  color: #6B6459;
   font-size: 24rpx;
   font-weight: 700;
-  line-height: 88rpx;
 }
 
-.contract-toggle-label {
-  display: block;
-  width: 100%;
-  line-height: 88rpx;
-  text-align: center;
+.group-status.active,
+.status-pill {
+  color: #146247;
 }
 
-.contract-toggle-chevron {
-  position: absolute;
-  top: 50%;
-  right: 28rpx;
-  transform: translateY(-50%);
+.group-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx 20rpx;
+  margin-top: 12rpx;
+  color: #6B6459;
+  font-size: 24rpx;
+  line-height: 34rpx;
+}
+
+.contract-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+  height: 96rpx;
+  margin-top: 18rpx;
+  padding: 0 22rpx;
+  border-radius: 20rpx;
+  background: #F7F1E8;
+}
+
+.contract-toggle-title {
+  color: #22262D;
+  font-size: 26rpx;
+  font-weight: 700;
+  line-height: 96rpx;
+}
+
+.contract-toggle-icon {
+  position: relative;
+  width: 48rpx;
+  height: 48rpx;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #FFFFFF;
+  box-shadow: 0 4rpx 12rpx rgba(34, 38, 45, 0.08);
   transition: transform 0.18s ease;
 }
 
-.contract-toggle-chevron.expanded {
-  transform: translateY(-50%) rotate(180deg);
+.contract-toggle-icon::after {
+  content: "";
+  position: absolute;
+  top: 15rpx;
+  left: 16rpx;
+  width: 14rpx;
+  height: 14rpx;
+  border-right: 4rpx solid #146247;
+  border-bottom: 4rpx solid #146247;
+  transform: rotate(45deg);
+}
+
+.contract-toggle-icon.expanded {
+  transform: rotate(180deg);
 }
 
 .contract-detail {
@@ -121,6 +175,10 @@
   margin-top: 18rpx;
 }
 
+.info-row:first-child {
+  margin-top: 0;
+}
+
 .info-item {
   display: block;
   flex: 1;
@@ -128,8 +186,8 @@
   box-sizing: border-box;
 }
 
-.address-row {
-  display: block;
+.info-item:last-child {
+  flex: 2;
 }
 
 .info-label {
@@ -154,7 +212,6 @@
   padding: 0 18rpx;
   border-radius: 999rpx;
   background: #E4F3ED;
-  color: #146247;
   font-size: 24rpx;
   font-weight: 700;
   line-height: 48rpx;
@@ -162,11 +219,10 @@
 
 .settlement {
   margin-top: 20rpx;
-  padding: 28rpx;
+  padding: 22rpx;
   border: 2rpx solid #E4D8C7;
-  border-radius: 32rpx;
-  background: #FFFDFA;
-  box-shadow: 0 10rpx 30rpx rgba(34, 38, 45, 0.06);
+  border-radius: 24rpx;
+  background: #FFFFFF;
 }
 
 .record-main {
@@ -217,7 +273,7 @@
 .facts {
   display: flex;
   gap: 16rpx;
-  margin-top: 24rpx;
+  margin-top: 22rpx;
   padding: 18rpx;
   border-radius: 20rpx;
   background: #F4EDE1;

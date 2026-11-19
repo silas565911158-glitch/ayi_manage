@@ -59,7 +59,7 @@
           <view class="metric-value-row">
             <text class="metric-value amount">{{totalPaidCompactText}}</text>
           </view>
-          <view class="metric-label">累计支付 {{state.settlementSummary.settledStages}} 期</view>
+          <view class="metric-label">累计支付 {{state.lifetimeSummary.settledStages}} 期</view>
         </view>
       </view>
 
@@ -73,7 +73,15 @@
 
     <view wx:if="{{reminderText}}" class="reminder">{{reminderText}}</view>
 
-    <view wx:if="{{error}}" class="stage-error">{{error}}</view>
+    <view wx:if="{{error}}" class="stage-error">
+      <view class="stage-error-copy">{{error}}</view>
+      <button
+        wx:if="{{locationPermissionDenied}}"
+        class="location-setting-button"
+        hover-class="button-hover"
+        bindtap="openLocationSetting"
+      >去开启定位</button>
+    </view>
 
     <view class="calendar-panel">
       <view class="calendar-header">
@@ -100,8 +108,8 @@
       </view>
       <view class="calendar-grid">
         <view wx:for="{{calendar.weeks}}" wx:for-index="weekIndex" wx:key="weekIndex" class="calendar-week">
-          <view wx:for="{{item}}" wx:for-item="day" wx:for-index="dayIndex" wx:key="dayIndex" class="day-cell {{day.checkedIn ? 'checked' : ''}} {{day.settled ? 'settled' : ''}} {{day.today ? 'today' : ''}} {{day.future ? 'future' : ''}} {{day.settled ? '' : (day.withinStage ? '' : 'outside')}}">
-            <view wx:if="{{day.checkedIn}}" class="day-dot"></view>
+          <view wx:for="{{item}}" wx:for-item="day" wx:for-index="dayIndex" wx:key="dayIndex" class="day-cell {{day.checkedIn ? 'checked' : ''}} {{day.backfill ? 'backfill' : ''}} {{day.settled ? 'settled' : ''}} {{day.today ? 'today' : ''}} {{day.future ? 'future' : ''}} {{day.settled ? '' : (day.withinStage ? '' : 'outside')}}">
+            <view wx:if="{{day.checkedIn && !day.backfill}}" class="day-dot"></view>
             <view class="day-number">{{day.day || ''}}</view>
             <view class="day-time">{{day.timeText}}</view>
           </view>

@@ -30,10 +30,19 @@ function buildBackfillBoard({
   earliestLocalDate,
   latestLocalDate,
   eligibleLocalDates = [],
-  selectedLocalDates = []
+  selectedLocalDates = [],
+  checkedLocalDates = [],
+  mode = 'range'
 }) {
   const eligible = new Set(eligibleLocalDates);
+  const checked = new Set(checkedLocalDates);
   const selected = new Set(selectedLocalDates);
+  const sortedSelectedDates = Array.from(selected).sort((left, right) => left.localeCompare(right));
+  const rangeStart = sortedSelectedDates[0] || null;
+  const rangeEnd = sortedSelectedDates[sortedSelectedDates.length - 1] || null;
+  const hasRangeEndpoints = Boolean(
+    mode === 'range' && rangeStart && rangeEnd && rangeStart !== rangeEnd
+  );
   const dates = enumerateLocalDates(earliestLocalDate, latestLocalDate);
   const groupedByMonth = new Map();
   dates.forEach((localDate) => {
@@ -42,27 +51,46 @@ function buildBackfillBoard({
     const key = `${year}-${String(month).padStart(2, '0')}`;
     if (!groupedByMonth.has(key)) groupedByMonth.set(key, []);
     groupedByMonth.get(key).push({
+      blank: false,
       date: localDate,
       day: Number(localDate.slice(8, 10)),
       eligible: eligible.has(localDate),
-      selected: selected.has(localDate)
+      checked: checked.has(localDate),
+      selected: selected.has(localDate),
+      rangeStart: mode === 'range' && localDate === rangeStart,
+      rangeEnd: mode === 'range' && localDate === rangeEnd,
+      rangeMiddle: hasRangeEndpoints && localDate > rangeStart && localDate < rangeEnd
     });
   });
 
   const boards = Array.from(groupedByMonth.entries()).map(([key, monthDays]) => {
     const [year, month] = key.split('-').map(Number);
-    const firstDate = parseLocalDate(monthDays[0].date);
-    const weekdayOffset = (new Date(
-      Date.UTC(firstDate.getUTCFullYear(), firstDate.getUTCMonth(), firstDate.getUTCDate())
-    ).getUTCDay() + 6) % 7;
+    const firstLocalDate = monthDays[0].date;
+    const [firstYear, firstMonth, firstDay] = firstLocalDate.split('-').map(Number);
+    const weekdayOffset = (new Date(Date.UTC(firstYear, firstMonth - 1, firstDay)).getUTCDay() + 6) % 7;
     const cells = Array.from({ length: weekdayOffset }, () => ({
+      blank: true,
       date: null,
       day: null,
       eligible: false,
-      selected: false
+      checked: false,
+      selected: false,
+      rangeStart: false,
+      rangeEnd: false,
+      rangeMiddle: false
     })).concat(monthDays);
     while (cells.length % 7 !== 0) {
-      cells.push({ date: null, day: null, eligible: false, selected: false });
+      cells.push({
+        blank: true,
+        date: null,
+        day: null,
+        eligible: false,
+        checked: false,
+        selected: false,
+        rangeStart: false,
+        rangeEnd: false,
+        rangeMiddle: false
+      });
     }
     return {
       title: `${year}年${month}月`,
@@ -80,10 +108,9 @@ function selectBackfillDate({ mode, date, selectedLocalDates = [], eligibleLocal
   if (!eligible.has(date)) return selectedLocalDates.slice().sort();
 
   if (mode === 'single') {
-    const selected = new Set(selectedLocalDates);
-    if (selected.has(date)) selected.delete(date);
-    else selected.add(date);
-    return Array.from(selected).sort();
+    return selectedLocalDates.length === 1 && selectedLocalDates[0] === date
+      ? []
+      : [date];
   }
 
   if (selectedLocalDates.length !== 1) return [date];

@@ -145,7 +145,8 @@ describe('mini program services', () => {
     expect(days.find((day) => day.date === '2026-11-12')).toMatchObject({
       checkedIn: true,
       timeText: '09:00',
-      source: 'employer_backfill'
+      source: 'employer_backfill',
+      backfill: true
     });
     expect(days.find((day) => day.date === '2026-11-03')).toMatchObject({
       settled: true,
@@ -194,6 +195,33 @@ describe('mini program services', () => {
     })).toEqual({ canPrevMonth: false, canNextMonth: true });
   });
 
+  test('opens the month containing the latest recorded work date', () => {
+    const { getInitialCalendarMonth } = require('../miniprogram/services/calendar-state');
+    expect(getInitialCalendarMonth({
+      startLocalDate: '2026-10-20',
+      todayLocalDate: '2026-11-19',
+      checkinRecords: [
+        { localDate: '2026-10-20', source: 'employer_backfill' },
+        { localDate: '2026-10-31', source: 'employer_backfill' }
+      ]
+    })).toEqual({ year: 2026, month: 10 });
+
+    expect(getInitialCalendarMonth({
+      startLocalDate: '2026-10-20',
+      todayLocalDate: '2026-11-19',
+      checkinRecords: [
+        { localDate: '2026-10-31', source: 'employer_backfill' },
+        { localDate: '2026-11-18', source: 'employee_checkin' }
+      ]
+    })).toEqual({ year: 2026, month: 11 });
+
+    expect(getInitialCalendarMonth({
+      startLocalDate: '2026-11-19',
+      todayLocalDate: '2026-11-19',
+      checkinRecords: []
+    })).toEqual({ year: 2026, month: 11 });
+  });
+
   test('builds a batch backfill board and supports range selection', () => {
     const {
       addLocalDays,
@@ -205,18 +233,30 @@ describe('mini program services', () => {
       earliestLocalDate: '2026-11-01',
       latestLocalDate: '2026-11-12',
       eligibleLocalDates: ['2026-11-02', '2026-11-04', '2026-11-05', '2026-11-11'],
-      selectedLocalDates: ['2026-11-04']
+      selectedLocalDates: ['2026-11-04'],
+      checkedLocalDates: ['2026-11-03'],
+      mode: 'range'
     });
     expect(board.boards[0]).toMatchObject({ title: '2026年11月' });
     const days = board.boards[0].weeks.flat();
-    expect(days.find((day) => day.date === '2026-11-01')).toMatchObject({ eligible: false });
+    expect(days.find((day) => !day.date)).toMatchObject({ blank: true, eligible: false });
+    expect(days.find((day) => day.date === '2026-11-01')).toMatchObject({
+      blank: false,
+      eligible: false
+    });
     expect(days.find((day) => day.date === '2026-11-04')).toMatchObject({
       eligible: true,
-      selected: true
+      selected: true,
+      rangeStart: true,
+      rangeEnd: true
     });
     expect(days.find((day) => day.date === '2026-11-05')).toMatchObject({
       eligible: true,
       selected: false
+    });
+    expect(days.find((day) => day.date === '2026-11-03')).toMatchObject({
+      eligible: false,
+      checked: true
     });
 
     expect(selectBackfillDate({
@@ -231,6 +271,72 @@ describe('mini program services', () => {
       selectedLocalDates: ['2026-11-04'],
       eligibleLocalDates: ['2026-11-04']
     })).toEqual([]);
+
+    const rangeBoard = buildBackfillBoard({
+      earliestLocalDate: '2026-11-04',
+      latestLocalDate: '2026-11-06',
+      eligibleLocalDates: ['2026-11-04', '2026-11-05', '2026-11-06'],
+      selectedLocalDates: ['2026-11-04', '2026-11-05', '2026-11-06']
+    });
+    const rangeDays = rangeBoard.boards[0].weeks.flat();
+    expect(rangeDays.find((day) => day.date === '2026-11-04'))
+      .toMatchObject({ rangeStart: true, rangeMiddle: false });
+    expect(rangeDays.find((day) => day.date === '2026-11-05'))
+      .toMatchObject({ rangeStart: false, rangeEnd: false, rangeMiddle: true });
+    expect(rangeDays.find((day) => day.date === '2026-11-06'))
+      .toMatchObject({ rangeEnd: true, rangeMiddle: false });
+  });
+
+  test('builds a full backfill board even when every day is already checked', () => {
+    const { buildBackfillBoard } = require('../miniprogram/services/backfill-state');
+    const board = buildBackfillBoard({
+      earliestLocalDate: '2026-11-19',
+      latestLocalDate: '2026-11-19',
+      eligibleLocalDates: [],
+      checkedLocalDates: ['2026-11-19']
+    });
+    const days = board.boards.flatMap((month) => month.weeks.flat());
+    expect(days.find((day) => day.date === '2026-11-19')).toMatchObject({
+      eligible: false,
+      selected: false,
+      checked: true
+    });
+  });
+
+  test('keeps single-day backfill selections independent from range visuals', () => {
+    const { buildBackfillBoard, selectBackfillDate } = require('../miniprogram/services/backfill-state');
+    const eligibleLocalDates = ['2026-11-04', '2026-11-05', '2026-11-06'];
+    const first = selectBackfillDate({
+      mode: 'single',
+      date: '2026-11-04',
+      selectedLocalDates: [],
+      eligibleLocalDates
+    });
+    const selected = selectBackfillDate({
+      mode: 'single',
+      date: '2026-11-05',
+      selectedLocalDates: first,
+      eligibleLocalDates
+    });
+    expect(selected).toEqual(['2026-11-05']);
+
+    const board = buildBackfillBoard({
+      earliestLocalDate: '2026-11-04',
+      latestLocalDate: '2026-11-06',
+      eligibleLocalDates,
+      selectedLocalDates: selected,
+      mode: 'single'
+    });
+    const days = board.boards[0].weeks.flat();
+    expect(days.find((day) => day.date === '2026-11-05')).toMatchObject({
+      selected: true,
+      rangeStart: false,
+      rangeEnd: false,
+      rangeMiddle: false
+    });
+    expect(days.find((day) => day.date === '2026-11-04')).toMatchObject({
+      selected: false
+    });
   });
 
   test('explains settlement calculations in plain language', () => {
@@ -308,7 +414,8 @@ describe('mini program services', () => {
 
     client.setMockRole('employee');
     const employeeBoot = await client.call('bootstrapUser', { role: 'employee' });
-    expect(employeeBoot.data.user.openid).toBe('mock-employee');
+    expect(employeeBoot.data.user.role).toBe('employee');
+    expect(employeeBoot.data.user).not.toHaveProperty('openid');
     expect(wxApi.getStorageSync('aunt-attendance-current-openid')).toBe('mock-employee');
   });
 

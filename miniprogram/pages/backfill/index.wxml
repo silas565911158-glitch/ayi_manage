@@ -4,7 +4,7 @@
   <view wx:else class="backfill-shell">
     <scroll-view scroll-y class="backfill-scroll">
     <view class="flow-title">补录</view>
-    <view class="flow-lead">只能补当前期内、最近30天且尚未打卡的日期；今天不能补录。</view>
+    <view class="flow-lead">可补最近30天内实际上工但尚未记录的日期；绿色点表示已有打卡，会自动跳过。</view>
 
     <view class="backfill-card">
       <view class="scope-row">
@@ -29,16 +29,20 @@
             wx:for="{{week}}"
             wx:for-item="day"
             wx:key="index"
-            class="board-day {{day.selected ? 'selected' : ''}} {{day.eligible ? '' : 'disabled'}}"
+            class="board-day {{day.blank ? 'blank' : ''}} {{day.selected ? 'selected' : ''}} {{day.rangeMiddle ? 'range-middle' : ''}} {{day.selected && day.rangeStart ? 'range-start' : ''}} {{day.selected && day.rangeEnd ? 'range-end' : ''}} {{day.eligible ? '' : 'disabled'}}"
             data-date="{{day.date}}"
             bindtap="selectDay"
-          >{{day.day || ''}}</view>
+          >
+            <text>{{day.day || ''}}</text>
+            <view wx:if="{{day.checked}}" class="checked-dot"></view>
+          </view>
         </view>
       </view>
+      <view wx:if="{{!state.backfill.eligibleLocalDates.length}}" class="board-empty">近30天暂无可补日期</view>
     </view>
 
     <view class="backfill-card">
-      <view class="config-row">
+      <view class="config-row vertical">
         <picker mode="time" value="{{workTime}}" bindchange="changeTime">
           <view class="time-box">
             <text>统一时间</text>
@@ -47,17 +51,15 @@
         </picker>
         <view class="reason-box">
           <view class="field-label">原因</view>
-          <scroll-view scroll-x class="reason-scroll">
-            <view class="reason-list">
-              <button
-                wx:for="{{reasons}}"
-                wx:key="*this"
-                class="reason-chip {{reason === item ? 'selected' : ''}}"
-                data-reason="{{item}}"
-                bindtap="selectReason"
-              >{{item}}</button>
-            </view>
-          </scroll-view>
+          <view class="reason-list">
+            <button
+              wx:for="{{reasons}}"
+              wx:key="*this"
+              class="reason-chip {{reason === item ? 'selected' : ''}}"
+              data-reason="{{item}}"
+              bindtap="selectReason"
+            >{{item}}</button>
+          </view>
         </view>
       </view>
       <textarea

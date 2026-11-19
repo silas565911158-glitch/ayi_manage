@@ -131,6 +131,16 @@ describe('two-party settlement flow', () => {
       paidAmount: 307.69,
       transferProofs: [{ fileId: 'wxfile://not-cloud.png' }]
     })).rejects.toMatchObject({ code: 'INVALID_TRANSFER_PROOF' });
+    await expect(employer.call('createSettlementRequest', {
+      paidAmount: 307.69,
+      transferProofs: [{ fileId: `cloud://bucket/transfer-proofs/other-contract/proof.png` }]
+    })).rejects.toMatchObject({ code: 'INVALID_TRANSFER_PROOF' });
+    await expect(employer.call('createSettlementRequest', {
+      paidAmount: 307.69,
+      transferProofs: [{
+        fileId: `cloud://bucket/transfer-proofs/${created.data.contract._id}/proof.png`
+      }]
+    })).resolves.toMatchObject({ ok: true });
   });
 
   test('dispute locks work until the employer cancels; cancelled requests do not create history', async () => {

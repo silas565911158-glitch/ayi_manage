@@ -1,7 +1,11 @@
 'use strict';
 
 const { api } = require('../../services/api');
-const { buildCalendarMonth, getCalendarNavigation } = require('../../services/calendar-state');
+const {
+  buildCalendarMonth,
+  getCalendarNavigation,
+  getInitialCalendarMonth
+} = require('../../services/calendar-state');
 const {
   formatCompactDateWithYear,
   formatCompactMoney,
@@ -26,6 +30,7 @@ Page({
     loading: true,
     routing: false,
     checkingIn: false,
+    locationPermissionDenied: false,
     role: '',
     state: null,
     showAuxiliary: false,
@@ -66,7 +71,11 @@ Page({
         }
         const state = result.data;
         if (this.routeFromState(state)) return;
-        const [todayYear, todayMonth] = state.today.localDate.split('-').map(Number);
+        const initialCalendar = getInitialCalendarMonth({
+          startLocalDate: state.currentStage.startLocalDate,
+          todayLocalDate: state.today.localDate,
+          checkinRecords: state.calendarCheckins || []
+        });
         const checkinTime = state.today.checkin && (state.today.checkin.workTime || state.today.checkin.serverTime)
           ? formatShanghaiClockTime(state.today.checkin.workTime || state.today.checkin.serverTime)
           : '';
@@ -79,14 +88,14 @@ Page({
           loading: false,
           role: state.user.role,
           state,
-          year: todayYear,
-          month: todayMonth,
+          year: initialCalendar.year,
+          month: initialCalendar.month,
           stageStartText: formatCompactDateWithYear(state.currentStage.startLocalDate),
           cumulativeWorkText: state.user.role === 'employee'
             ? `累计工作 ${state.cumulativeWorkDays || 0} 天${state.currentStage.backfillDays ? ` · 含补录 ${state.currentStage.backfillDays} 天` : ''}`
-            : `历史已结算 ${state.settlementSummary.settledStages} 期`,
+            : `历史已结算 ${state.lifetimeSummary ? state.lifetimeSummary.settledStages : state.settlementSummary.settledStages} 期`,
           totalPaidCompactText: formatCompactMoney(
-            state.settlementSummary ? state.settlementSummary.totalPaidAmount : 0
+            state.lifetimeSummary ? state.lifetimeSummary.totalPaidAmount : state.settlementSummary.totalPaidAmount
           ),
           todayClockText: checkinTime || '--:--',
           checkinUnavailableText: state.today.localDate < state.currentStage.startLocalDate
@@ -96,7 +105,8 @@ Page({
           bottomCheckinDisabled: state.today.checkedIn || !state.canCheckin,
           reminderText: buildReminderText(state.reminder),
           error: '',
-          checkingIn: false
+          checkingIn: false,
+          locationPermissionDenied: false
         });
         this.renderCalendar();
       })
@@ -195,11 +205,29 @@ Page({
         this.refresh();
       })
       .catch((error) => {
-        const message = error.errMsg && /auth deny|denied|authorize/.test(error.errMsg)
+        const permissionDenied = isLocationPermissionError(error);
+        const message = permissionDenied
           ? '需要位置权限才能打卡，请在设置中开启。'
           : error.message || '打卡失败，请稍后重试';
-        this.setData({ checkingIn: false, error: message });
+        this.setData({
+          checkingIn: false,
+          locationPermissionDenied: permissionDenied,
+          error: message
+        });
       });
+  },
+
+  openLocationSetting() {
+    wx.openSetting({
+      success: (result) => {
+        if (result.authSetting && result.authSetting['scope.userLocation']) {
+          this.setData({ error: '', locationPermissionDenied: false });
+        }
+      },
+      fail: () => {
+        wx.showToast({ title: '打开设置失败', icon: 'none' });
+      }
+    });
   },
 
   toggleAuxiliary() {
@@ -276,4 +304,9 @@ function buildReminderText(reminder) {
   return reminder.daysOver > 0
     ? `已超过约定提醒线 ${reminder.daysOver} 天`
     : '已达到约定提醒线，可结算也可继续累计';
+}
+
+function isLocationPermissionError(error) {
+  const message = `${error && error.errMsg ? error.errMsg : ''} ${error && error.message ? error.message : ''}`;
+  return /auth deny|denied|authorize|permission/i.test(message);
 }

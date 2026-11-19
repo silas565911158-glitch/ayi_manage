@@ -1,9 +1,11 @@
 'use strict';
 
 class CloudDatabaseRepository {
-  constructor(db) {
+  constructor(db, { queryPageSize = 1000, contractPageSize = 100 } = {}) {
     this.db = db;
     this.storageType = 'cloud';
+    this.queryPageSize = queryPageSize;
+    this.contractPageSize = contractPageSize;
   }
 
   collection(name) {
@@ -38,11 +40,11 @@ class CloudDatabaseRepository {
 
   async listContractsForParticipant(openid) {
     const [asEmployer, asEmployee] = await Promise.all([
-      this.collection('contracts').where({ employerOpenid: openid }).limit(100).get(),
-      this.collection('contracts').where({ employeeOpenid: openid }).limit(100).get()
+      this.listDocuments('contracts', { employerOpenid: openid }, null, 'asc', this.contractPageSize),
+      this.listDocuments('contracts', { employeeOpenid: openid }, null, 'asc', this.contractPageSize)
     ]);
     const unique = new Map();
-    [...asEmployer.data, ...asEmployee.data].forEach((contract) => unique.set(contract._id, contract));
+    [...asEmployer, ...asEmployee].forEach((contract) => unique.set(contract._id, contract));
     return Array.from(unique.values()).sort((left, right) => {
       if (left.status === 'active') return -1;
       if (right.status === 'active') return 1;
@@ -125,10 +127,11 @@ class CloudDatabaseRepository {
     });
   }
 
-  async cancelUnmatchedCooperation({ contractId, cycleId }) {
+  async cancelUnmatchedCooperation({ contractId, cycleId, employerOpenid }) {
     return this.transitionUnboundContract({
       contractId,
       cycleId,
+      releaseEmployerOpenid: employerOpenid,
       contractPatch: {
         status: 'cancelled',
         inviteCode: null,
@@ -145,6 +148,7 @@ class CloudDatabaseRepository {
     cycleId = '',
     expectedInviteCode = undefined,
     employeeOpenid = '',
+    releaseEmployerOpenid = '',
     contractPatch = {},
     cyclePatch = {}
   }) {
@@ -173,6 +177,16 @@ class CloudDatabaseRepository {
           throw createRepositoryError('EMPLOYEE_ALREADY_JOINED');
         }
       }
+      if (releaseEmployerOpenid) {
+        const employerDoc = await transaction.collection('users').doc(releaseEmployerOpenid).get();
+        if (
+          !employerDoc.data ||
+          employerDoc.data.role !== 'employer' ||
+          employerDoc.data.activeContractId !== contractId
+        ) {
+          throw createRepositoryError('CONTRACT_NOT_FOUND');
+        }
+      }
 
       let cycle = null;
       if (cycleId) {
@@ -192,6 +206,12 @@ class CloudDatabaseRepository {
           .collection('users')
           .doc(employeeOpenid)
           .update({ data: { activeContractId } });
+      }
+      if (releaseEmployerOpenid) {
+        await transaction
+          .collection('users')
+          .doc(releaseEmployerOpenid)
+          .update({ data: { activeContractId: null } });
       }
       await transaction.commit();
       return {
@@ -222,21 +242,11 @@ class CloudDatabaseRepository {
   }
 
   async listCheckins(cycleId) {
-    const result = await this.collection('checkins')
-      .where({ cycleId })
-      .orderBy('localDate', 'asc')
-      .limit(1000)
-      .get();
-    return result.data;
+    return this.listDocuments('checkins', { cycleId }, 'localDate', 'asc', this.queryPageSize);
   }
 
   async listCheckinsByContract(contractId) {
-    const result = await this.collection('checkins')
-      .where({ contractId })
-      .orderBy('localDate', 'asc')
-      .limit(1000)
-      .get();
-    return result.data;
+    return this.listDocuments('checkins', { contractId }, 'localDate', 'asc', this.queryPageSize);
   }
 
   async getCheckin(cycleId, localDate) {
@@ -245,6 +255,24 @@ class CloudDatabaseRepository {
 
   async getContractCheckin(contractId, localDate) {
     return this.first('checkins', { contractId, localDate });
+  }
+
+  async getEmployeeCheckinByDate(employeeOpenid, localDate) {
+    return this.first('checkins', { employeeOpenid, localDate });
+  }
+
+  async listEmployeeCheckinsBetween(employeeOpenid, startLocalDate, endLocalDate) {
+    const command = this.db.command;
+    const where = command
+      ? {
+        employeeOpenid,
+        localDate: command.gte(startLocalDate).and(command.lte(endLocalDate))
+      }
+      : {
+        employeeOpenid,
+        localDate: { $gte: startLocalDate, $lte: endLocalDate }
+      };
+    return this.listDocuments('checkins', where, 'localDate', 'asc', this.queryPageSize);
   }
 
   async insertCheckin(checkin) {
@@ -260,18 +288,35 @@ class CloudDatabaseRepository {
       if (!contract || contract.status !== 'active' || !contract.employeeOpenid) {
         throw createRepositoryError('CONTRACT_NOT_BOUND');
       }
+      if (contract.pendingSettlementRequestId) {
+        throw createRepositoryError('SETTLEMENT_REQUEST_PENDING');
+      }
       const stageDoc = await transaction.collection('cycles').doc(stageId).get();
       const stage = stageDoc.data;
       if (!stage || stage.contractId !== contractId || stage.status !== 'open') {
         throw createRepositoryError('NO_OPEN_STAGE');
       }
       for (const checkin of checkins) {
-        const existing = await transaction.collection('checkins').doc(checkin._id).get();
-        if (existing.data) throw createRepositoryError('CHECKIN_ALREADY_EXISTS');
+        const existing = await this.getOptionalTransactionDoc(transaction, 'checkins', checkin._id);
+        if (existing) throw createRepositoryError('CHECKIN_ALREADY_EXISTS');
       }
       for (const checkin of checkins) {
         await transaction.collection('checkins').add({ data: checkin });
       }
+      const earliestBackfill = checkins[0].localDate;
+      const currentStart = stage.startLocalDate || null;
+      const nextStart = !currentStart || earliestBackfill < currentStart
+        ? earliestBackfill
+        : currentStart;
+      await transaction
+        .collection('cycles')
+        .doc(stageId)
+        .update({
+          data: {
+            startLocalDate: nextStart,
+            checkinCount: (Number(stage.checkinCount) || 0) + checkins.length
+          }
+        });
       await transaction.commit();
       return checkins;
     } catch (error) {
@@ -283,6 +328,16 @@ class CloudDatabaseRepository {
   async insertAttempt(attempt) {
     await this.collection('checkin_attempts').add({ data: attempt });
     return attempt;
+  }
+
+  async getOptionalTransactionDoc(transaction, collectionName, documentId) {
+    try {
+      const result = await transaction.collection(collectionName).doc(documentId).get();
+      return result.data || null;
+    } catch (error) {
+      if (/document with _id .+ does not exist/i.test(error.message || '')) return null;
+      throw error;
+    }
   }
 
   async findChallengeByToken(token) {
@@ -300,15 +355,20 @@ class CloudDatabaseRepository {
   }
 
   async completeCheckin(challenge, checkin) {
-    const existing = await this.getContractCheckin(checkin.contractId, checkin.localDate);
-    if (existing) {
-      const error = new Error('DUPLICATE_CHECKIN');
-      error.code = 'DUPLICATE_CHECKIN';
-      throw error;
-    }
-
     const transaction = await this.db.startTransaction();
     try {
+      const contractDoc = await transaction.collection('contracts').doc(checkin.contractId).get();
+      const contract = contractDoc.data;
+      if (
+        !contract ||
+        contract.status !== 'active' ||
+        contract.employeeOpenid !== checkin.employeeOpenid
+      ) {
+        throw createRepositoryError('CONTRACT_NOT_BOUND');
+      }
+      if (contract.pendingSettlementRequestId) {
+        throw createRepositoryError('SETTLEMENT_REQUEST_PENDING');
+      }
       const cycleDoc = await transaction.collection('cycles').doc(checkin.cycleId).get();
       if (!cycleDoc.data || cycleDoc.data.status !== 'open') {
         const error = new Error('NO_OPEN_CYCLE');
@@ -321,11 +381,23 @@ class CloudDatabaseRepository {
         error.code = 'CHALLENGE_USED';
         throw error;
       }
+      const existingCheckin = await this.getOptionalTransactionDoc(
+        transaction,
+        'checkins',
+        checkin._id
+      );
+      if (existingCheckin) {
+        throw createRepositoryError('CHECKIN_ALREADY_EXISTS');
+      }
       await transaction.collection('checkins').add({ data: checkin });
       await transaction
         .collection('challenges')
         .doc(challenge._id)
         .update({ data: { usedAt: checkin.serverTime } });
+      await transaction
+        .collection('cycles')
+        .doc(checkin.cycleId)
+        .update({ data: { checkinCount: (Number(cycleDoc.data.checkinCount) || 0) + 1 } });
       await transaction.commit();
       return checkin;
     } catch (error) {
@@ -335,12 +407,22 @@ class CloudDatabaseRepository {
   }
 
   async listSettlements(contractId) {
-    const result = await this.collection('settlements')
-      .where({ contractId })
-      .orderBy('settledAt', 'desc')
-      .limit(100)
-      .get();
-    return result.data;
+    return this.listDocuments('settlements', { contractId }, 'settledAt', 'desc', this.contractPageSize);
+  }
+
+  async listDocuments(collectionName, where, orderField, orderDirection, pageSize) {
+    const documents = [];
+    let offset = 0;
+    let page = [];
+    do {
+      let query = this.collection(collectionName).where(where);
+      if (orderField) query = query.orderBy(orderField, orderDirection);
+      const result = await query.limit(pageSize).skip(offset).get();
+      page = Array.isArray(result.data) ? result.data : [];
+      documents.push(...page);
+      offset += page.length;
+    } while (page.length === pageSize);
+    return documents;
   }
 
   async findPendingSettlementRequest(contractId) {
@@ -362,8 +444,72 @@ class CloudDatabaseRepository {
   }
 
   async insertSettlementRequest(request) {
-    await this.collection('settlement_requests').add({ data: request });
-    return request;
+    const transaction = await this.db.startTransaction();
+    try {
+      const contractDoc = await transaction.collection('contracts').doc(request.contractId).get();
+      const contract = contractDoc.data;
+      if (!contract || contract.status !== 'active' || !contract.employeeOpenid) {
+        throw createRepositoryError('CONTRACT_NOT_BOUND');
+      }
+      if (contract.pendingSettlementRequestId) {
+        throw createRepositoryError('SETTLEMENT_REQUEST_PENDING');
+      }
+      const stageDoc = await transaction.collection('cycles').doc(request.stageId).get();
+      const stage = stageDoc.data;
+      if (!stage || stage.contractId !== request.contractId || stage.status !== 'open') {
+        throw createRepositoryError('NO_OPEN_STAGE');
+      }
+      if (!Number.isFinite(Number(stage.checkinCount)) || Number(stage.checkinCount) !== Number(request.days)) {
+        throw createRepositoryError('SETTLEMENT_STAGE_CHANGED');
+      }
+      await transaction.collection('settlement_requests').add({ data: request });
+      await transaction
+        .collection('contracts')
+        .doc(request.contractId)
+        .update({ data: { pendingSettlementRequestId: request._id } });
+      await transaction.commit();
+      return request;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async transitionSettlementRequest({
+    requestId,
+    expectedStatuses,
+    patch,
+    clearContractLock = false
+  }) {
+    const transaction = await this.db.startTransaction();
+    try {
+      const requestDoc = await transaction.collection('settlement_requests').doc(requestId).get();
+      const request = requestDoc.data;
+      if (!request || !expectedStatuses.includes(request.status)) {
+        throw createRepositoryError('SETTLEMENT_REQUEST_NOT_PENDING');
+      }
+      const contractDoc = await transaction.collection('contracts').doc(request.contractId).get();
+      const contract = contractDoc.data;
+      if (
+        !contract ||
+        contract.status !== 'active' ||
+        contract.pendingSettlementRequestId !== requestId
+      ) {
+        throw createRepositoryError('SETTLEMENT_REQUEST_NOT_PENDING');
+      }
+      await transaction.collection('settlement_requests').doc(requestId).update({ data: patch });
+      if (clearContractLock) {
+        await transaction
+          .collection('contracts')
+          .doc(request.contractId)
+          .update({ data: { pendingSettlementRequestId: null } });
+      }
+      await transaction.commit();
+      return { ...request, ...patch };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
   }
 
   async updateSettlementRequest(requestId, patch) {
@@ -383,12 +529,33 @@ class CloudDatabaseRepository {
         throw error;
       }
 
+      const contractDoc = await transaction.collection('contracts').doc(request.contractId).get();
+      const contract = contractDoc.data;
+      if (
+        !contract ||
+        contract.status !== 'active' ||
+        contract.pendingSettlementRequestId !== request._id
+      ) {
+        throw createRepositoryError('SETTLEMENT_REQUEST_NOT_PENDING');
+      }
+
       const stageDoc = await transaction.collection('cycles').doc(closedStage._id).get();
       if (!stageDoc.data || stageDoc.data.status !== 'open') {
         const error = new Error('NO_OPEN_STAGE');
         error.code = 'NO_OPEN_STAGE';
         throw error;
       }
+      if (
+        !Number.isFinite(Number(stageDoc.data.checkinCount)) ||
+        Number(stageDoc.data.checkinCount) !== Number(request.days)
+      ) {
+        throw createRepositoryError('SETTLEMENT_STAGE_CHANGED');
+      }
+
+      await transaction
+        .collection('contracts')
+        .doc(request.contractId)
+        .update({ data: { pendingSettlementRequestId: null } });
 
       await transaction
         .collection('settlement_requests')
@@ -444,6 +611,12 @@ class CloudDatabaseRepository {
       const stage = stageDoc.data;
       if (!stage || stage.contractId !== contractId || stage.status !== 'open') {
         throw createRepositoryError('NO_OPEN_STAGE');
+      }
+      if (contract.pendingSettlementRequestId) {
+        throw createRepositoryError('SETTLEMENT_REQUEST_PENDING');
+      }
+      if (Number(stage.checkinCount) !== 0) {
+        throw createRepositoryError('SETTLE_BEFORE_TERMINATION');
       }
       await transaction.collection('contracts').doc(contractId).update({ data: contractPatch });
       await transaction.collection('cycles').doc(stageId).update({ data: cyclePatch });

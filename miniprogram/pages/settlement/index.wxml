@@ -29,13 +29,19 @@
         <input class="reason-input" value="{{differenceReason}}" bindinput="onReasonInput" placeholder="实付与计算不一致时必填" />
       </view>
       <view class="field">
-        <view class="field-label">转账截图（必填，最多3张）</view>
+        <view class="field-label">转账截图（必填，{{images.length}}/3）</view>
         <view class="images">
           <view wx:for="{{images}}" wx:key="path" class="image-wrap">
             <image src="{{item.path}}" mode="aspectFill" bindtap="previewImage" data-index="{{index}}" />
-            <button class="remove" bindtap="removeImage" data-index="{{index}}">×</button>
+                <view class="remove" catchtap="removeImage" data-index="{{index}}">×</view>
           </view>
-          <button wx:if="{{images.length < 3}}" class="add-image" hover-class="button-hover" bindtap="chooseImage">+</button>
+          <view
+            wx:if="{{images.length < 3}}"
+            class="add-image"
+            hover-class="add-image-hover"
+            aria-role="button"
+            bindtap="chooseImage"
+          >+</view>
         </view>
       </view>
       <button class="primary-button" hover-class="button-hover" bindtap="submit" disabled="{{submitting || state.currentStage.days < 1}}">{{submitting ? '正在发送…' : '发给阿姨确认'}}</button>

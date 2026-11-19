@@ -26,10 +26,13 @@ describe('attendance cloud function', () => {
       now: () => new Date('2026-11-11T01:00:00.000Z')
     });
 
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     const boot = await handler({ action: 'bootstrapUser', payload: { role: 'employer' } });
-    expect(boot).toMatchObject({ ok: true, data: { user: { openid: 'openid-server', role: 'employer' } } });
+    expect(boot).toMatchObject({ ok: true, data: { user: { role: 'employer' } } });
+    expect(boot.data.user).not.toHaveProperty('openid');
 
     const unknown = await handler({ action: 'settleCycle' });
+    warnSpy.mockRestore();
     expect(unknown).toMatchObject({ ok: false, code: 'UNKNOWN_ACTION' });
   });
 
@@ -100,6 +103,31 @@ describe('attendance cloud function', () => {
       .toBe('https://temp.example/cloud%3A%2F%2Fenv%2Fproof-1.jpg');
     expect(data.settlements[0].transferProofs[0].temporaryUrl)
       .toBe('https://temp.example/cloud%3A%2F%2Fenv%2Fproof-2.jpg');
+  });
+
+  test('chunks temporary URL requests to stay within cloud API limits', async () => {
+    const { addTemporaryTransferProofUrls } = require('../cloudfunctions/attendance/index');
+    const requests = [];
+    const cloudSDK = {
+      getTempFileURL: async ({ fileList }) => {
+        requests.push(fileList);
+        return {
+          fileList: fileList.map((fileId) => ({ fileID: fileId, tempFileURL: `https://temp/${fileId}` }))
+        };
+      }
+    };
+    const data = {
+      settlements: [{
+        transferProofs: Array.from({ length: 55 }, (_, index) => ({
+          fileId: `cloud://env/proof-${index}.jpg`
+        }))
+      }]
+    };
+
+    await addTemporaryTransferProofUrls(data, cloudSDK);
+
+    expect(requests.map((item) => item.length)).toEqual([50, 5]);
+    expect(data.settlements[0].transferProofs.every((proof) => proof.temporaryUrl)).toBe(true);
   });
 
   test('keeps transfer proofs available when temporary URL generation is unavailable', async () => {

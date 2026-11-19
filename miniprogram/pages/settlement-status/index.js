@@ -3,6 +3,7 @@
 const { api } = require('../../services/api');
 const {
   buildSettlementExplanation,
+  formatCompactDateWithYear,
   formatMoney,
   getTransferProofUrl
 } = require('../../services/view-state');
@@ -13,6 +14,7 @@ Page({
     role: '',
     state: null,
     explanation: null,
+    nextStageStartText: '',
     paidText: formatMoney(0),
     title: '',
     working: false,
@@ -34,6 +36,7 @@ Page({
       }
 
       const pending = state.pendingSettlement;
+      const nextStageStartText = formatCompactDateWithYear(pending.nextStageStartLocalDate);
       const explanation = buildSettlementExplanation({
         totalAmount: pending.totalAmount,
         targetDays: pending.targetDays,
@@ -47,6 +50,7 @@ Page({
         role: state.user.role,
         state,
         explanation,
+        nextStageStartText,
         paidText: formatMoney(pending.paidAmount),
         title: pending.status === 'disputed'
           ? '阿姨对金额有疑问'
@@ -73,7 +77,7 @@ Page({
     if (this.data.working) return;
     wx.showModal({
       title: '确认收款',
-      content: `确认收到 ${this.data.paidText}？确认后新一期开始。`,
+      content: `确认收到 ${this.data.paidText}？确认后新一期从 ${this.data.nextStageStartText} 开始。`,
       confirmText: '确认收款',
       cancelText: '再看看',
       success: ({ confirm }) => {

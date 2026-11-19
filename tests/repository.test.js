@@ -192,6 +192,164 @@ describe('attendance repositories', () => {
     expect(committed).toBe(true);
   });
 
+  test('cloud repository returns participant contracts from paginated arrays', async () => {
+    const contracts = [
+      {
+        _id: 'contract_1',
+        status: 'ended',
+        employerOpenid: 'employer',
+        employeeOpenid: 'employee',
+        endedAt: '2026-11-01T00:00:00.000Z'
+      },
+      {
+        _id: 'contract_2',
+        status: 'active',
+        employerOpenid: 'employer',
+        employeeOpenid: 'employee',
+        createdAt: '2026-11-02T00:00:00.000Z'
+      }
+    ];
+    const db = {
+      collection() {
+        return {
+          where(where) {
+            return {
+              limit(pageSize) {
+                return {
+                  skip(offset) {
+                    return {
+                      async get() {
+                        const matches = contracts.filter((contract) =>
+                          Object.entries(where).every(([key, value]) => contract[key] === value)
+                        );
+                        return { data: matches.slice(offset, offset + pageSize) };
+                      }
+                    };
+                  }
+                };
+              }
+            };
+          }
+        };
+      }
+    };
+    const repository = new CloudDatabaseRepository(db, { contractPageSize: 1 });
+
+    await expect(repository.listContractsForParticipant('employer')).resolves.toEqual([
+      contracts[1],
+      contracts[0]
+    ]);
+  });
+
+  test('cloud repository treats missing backfill check-in documents as absent', async () => {
+    const contract = {
+      _id: 'contract_1',
+      status: 'active',
+      employeeOpenid: 'employee',
+      pendingSettlementRequestId: null
+    };
+    const stage = {
+      _id: 'stage_1',
+      contractId: 'contract_1',
+      status: 'open',
+      startLocalDate: '2026-11-10',
+      checkinCount: 0
+    };
+    let committed = false;
+    const transaction = {
+      collection(name) {
+        return {
+          async add({ data }) {
+            if (name !== 'checkins') throw new Error('unexpected addition');
+            expect(data._id).toBe('contract_1:2026-11-04');
+          },
+          doc(id) {
+            return {
+              async get() {
+                if (name === 'contracts') return { data: contract };
+                if (name === 'cycles') return { data: stage };
+                throw new Error(`document.get:fail document with _id ${id} does not exist`);
+              },
+              async update({ data }) {
+                expect(name).toBe('cycles');
+                expect(data).toEqual({ startLocalDate: '2026-11-04', checkinCount: 1 });
+              }
+            };
+          }
+        };
+      },
+      async commit() { committed = true; },
+      async rollback() { committed = false; }
+    };
+    const repository = new CloudDatabaseRepository({ startTransaction: async () => transaction });
+
+    await repository.insertBackfillCheckins({
+      contractId: 'contract_1',
+      stageId: 'stage_1',
+      checkins: [{ _id: 'contract_1:2026-11-04', localDate: '2026-11-04' }]
+    });
+    expect(committed).toBe(true);
+  });
+
+  test('cloud repository commits a check-in when its deterministic document is absent', async () => {
+    const contract = {
+      _id: 'contract_1',
+      status: 'active',
+      employeeOpenid: 'employee',
+      pendingSettlementRequestId: null
+    };
+    const cycle = {
+      _id: 'cycle_1',
+      contractId: 'contract_1',
+      status: 'open',
+      checkinCount: 0
+    };
+    const challenge = { _id: 'challenge_1', usedAt: null };
+    const checkin = {
+      _id: 'contract_1:2026-11-19',
+      contractId: 'contract_1',
+      cycleId: 'cycle_1',
+      employeeOpenid: 'employee',
+      serverTime: '2026-11-19T01:00:00.000Z'
+    };
+    const additions = [];
+    const updates = [];
+    let committed = false;
+    const transaction = {
+      collection(name) {
+        return {
+          async add({ data }) {
+            additions.push({ name, data });
+          },
+          doc(id) {
+            return {
+              async get() {
+                if (name === 'contracts') return { data: contract };
+                if (name === 'cycles') return { data: cycle };
+                if (name === 'challenges') return { data: challenge };
+                throw new Error(`document.get:fail document with _id ${id} does not exist`);
+              },
+              async update({ data }) {
+                updates.push({ name, id, data });
+              }
+            };
+          }
+        };
+      },
+      async commit() { committed = true; },
+      async rollback() { committed = false; }
+    };
+    const repository = new CloudDatabaseRepository({ startTransaction: async () => transaction });
+
+    await expect(repository.completeCheckin(challenge, checkin)).resolves.toBe(checkin);
+    expect(additions).toEqual([{ name: 'checkins', data: checkin }]);
+    expect(updates).toEqual([
+      { name: 'challenges', id: 'challenge_1', data: { usedAt: checkin.serverTime } },
+      { name: 'cycles', id: 'cycle_1', data: { checkinCount: 1 } }
+    ]);
+    expect(committed).toBe(true);
+  });
+
   test('cloud repository atomically inserts backfills and terminates a bound contract', async () => {
     const contract = {
       _id: 'contract_1',
@@ -199,7 +357,7 @@ describe('attendance repositories', () => {
       employerOpenid: 'employer',
       employeeOpenid: 'employee'
     };
-    const stage = { _id: 'stage_1', contractId: 'contract_1', status: 'open' };
+    const stage = { _id: 'stage_1', contractId: 'contract_1', status: 'open', checkinCount: 0 };
     const additions = [];
     const updates = [];
     let committed = false;
@@ -245,12 +403,119 @@ describe('attendance repositories', () => {
       employeeOpenid: 'employee'
     });
     expect(updates).toEqual([
+      {
+        name: 'cycles',
+        id: 'stage_1',
+        data: { startLocalDate: '2026-11-04', checkinCount: 2 }
+      },
       { name: 'contracts', id: 'contract_1', data: { status: 'ended' } },
       { name: 'cycles', id: 'stage_1', data: { status: 'ended' } },
       { name: 'users', id: 'employer', data: { activeContractId: null } },
       { name: 'users', id: 'employee', data: { activeContractId: null } }
     ]);
     expect(committed).toBe(true);
+  });
+
+  test('cloud repository rejects lifecycle writes when a settlement lock is already held', async () => {
+    const contract = {
+      _id: 'contract_1',
+      status: 'active',
+      employerOpenid: 'employer',
+      employeeOpenid: 'employee',
+      pendingSettlementRequestId: 'request_1'
+    };
+    const transaction = {
+      collection(name) {
+        return {
+          async add() {},
+          doc(id) {
+            return {
+              async get() {
+                if (name === 'contracts') return { data: contract };
+                if (name === 'cycles') {
+                  return { data: { _id: id, contractId: 'contract_1', status: 'open', checkinCount: 0 } };
+                }
+                return { data: null };
+              },
+              async update() {}
+            };
+          }
+        };
+      },
+      async commit() {},
+      async rollback() {}
+    };
+    const repository = new CloudDatabaseRepository({ startTransaction: async () => transaction });
+    const request = {
+      _id: 'request_2',
+      contractId: 'contract_1',
+      stageId: 'stage_1',
+      days: 0,
+      status: 'pending_employee'
+    };
+
+    await expect(repository.insertSettlementRequest(request))
+      .rejects.toThrow('SETTLEMENT_REQUEST_PENDING');
+    await expect(repository.insertBackfillCheckins({
+      contractId: 'contract_1',
+      stageId: 'stage_1',
+      checkins: [{ _id: 'contract_1:2026-11-01', localDate: '2026-11-01' }]
+    })).rejects.toThrow('SETTLEMENT_REQUEST_PENDING');
+    await expect(repository.completeCheckin(
+      { _id: 'challenge_1', usedAt: null },
+      {
+        _id: 'contract_1:2026-11-02',
+        contractId: 'contract_1',
+        cycleId: 'stage_1',
+        employeeOpenid: 'employee',
+        localDate: '2026-11-02',
+        serverTime: '2026-11-02T01:00:00.000Z'
+      }
+    )).rejects.toThrow('SETTLEMENT_REQUEST_PENDING');
+    await expect(repository.terminateContract({
+      contractId: 'contract_1',
+      stageId: 'stage_1',
+      contractPatch: {},
+      cyclePatch: {},
+      employerOpenid: 'employer',
+      employeeOpenid: 'employee'
+    })).rejects.toThrow('SETTLEMENT_REQUEST_PENDING');
+  });
+
+  test('cloud repository paginates long check-in histories', async () => {
+    const skipCalls = [];
+    const firstPage = [{ _id: 'checkin-1' }, { _id: 'checkin-2' }];
+    const secondPage = [{ _id: 'checkin-3' }];
+    const db = {
+      collection(name) {
+        return {
+          where(where) {
+            return {
+              orderBy(field, direction) {
+                return {
+                  limit(pageSize) {
+                    return {
+                      skip(offset) {
+                        skipCalls.push({ name, where, field, direction, pageSize, offset });
+                        return {
+                          async get() {
+                            return { data: offset === 0 ? firstPage : secondPage };
+                          }
+                        };
+                      }
+                    };
+                  }
+                };
+              }
+            };
+          }
+        };
+      }
+    };
+    const repository = new CloudDatabaseRepository(db, { queryPageSize: 2 });
+
+    await expect(repository.listCheckinsByContract('contract_1')).resolves.toHaveLength(3);
+    expect(skipCalls.map((item) => item.offset)).toEqual([0, 2]);
   });
 
   test('memory repository enforces one active cooperation per participant', () => {

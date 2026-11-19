@@ -34,9 +34,16 @@ function createHandler({
       await addTemporaryTransferProofUrls(data, sdk);
       return { ok: true, data };
     } catch (error) {
+      const log = {
+        action: event.action || '',
+        code: error.code || (error instanceof BusinessError ? error.code : 'CLOUD_FUNCTION_ERROR'),
+        message: error.message || ''
+      };
       if (error instanceof BusinessError) {
+        console.warn('attendance business rejection', log);
         return { ok: false, code: error.code, message: error.message };
       }
+      console.error('attendance unexpected failure', { ...log, stack: error.stack || '' });
       return { ok: false, code: 'CLOUD_FUNCTION_ERROR', message: '服务暂时不可用，请稍后重试' };
     }
   };
@@ -52,24 +59,25 @@ async function addTemporaryTransferProofUrls(data, sdk) {
     .filter((proof) => proof && typeof proof.fileId === 'string' && proof.fileId.startsWith('cloud://'));
   if (proofs.length === 0) return data;
 
-  try {
-    const result = await sdk.getTempFileURL({
-      fileList: proofs.map((proof) => proof.fileId)
-    });
-    const fileList = Array.isArray(result) ? result : result.fileList || [];
-    const urls = new Map();
-    fileList.forEach((item) => {
-      if (item && item.fileID && item.tempFileURL) {
-        urls.set(item.fileID, item.tempFileURL);
-      }
-    });
-    proofs.forEach((proof) => {
-      const temporaryUrl = urls.get(proof.fileId);
-      if (temporaryUrl) proof.temporaryUrl = temporaryUrl;
-    });
-  } catch (error) {
-    // Transfer proofs remain available to their uploader. A temporary URL is only
-    // needed so the other participant can view a file from a private bucket.
+  for (let index = 0; index < proofs.length; index += 50) {
+    try {
+      const chunk = proofs.slice(index, index + 50).map((proof) => proof.fileId);
+      const result = await sdk.getTempFileURL({ fileList: chunk });
+      const fileList = Array.isArray(result) ? result : result.fileList || [];
+      const urls = new Map();
+      fileList.forEach((item) => {
+        if (item && item.fileID && item.tempFileURL) {
+          urls.set(item.fileID, item.tempFileURL);
+        }
+      });
+      proofs.forEach((proof) => {
+        const temporaryUrl = urls.get(proof.fileId);
+        if (temporaryUrl) proof.temporaryUrl = temporaryUrl;
+      });
+    } catch (error) {
+      // Transfer proofs remain available to their uploader. A temporary URL is only
+      // needed so the other participant can view a file from a private bucket.
+    }
   }
   return data;
 }

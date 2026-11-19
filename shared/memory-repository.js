@@ -150,7 +150,7 @@ class MemoryRepository {
     return { contract };
   }
 
-  cancelUnmatchedCooperation({ contractId, cycleId }) {
+  cancelUnmatchedCooperation({ contractId, cycleId, employerOpenid }) {
     const contract = this.contracts.find((item) => item._id === contractId);
     this.ensureContractCanBeChanged(contract);
     let cycle = null;
@@ -168,6 +168,7 @@ class MemoryRepository {
       inviteCode: null,
       inviteExpiresAt: null
     });
+    if (employerOpenid) this.updateUser(employerOpenid, { activeContractId: null });
     return { contract, cycle };
   }
 
@@ -226,6 +227,23 @@ class MemoryRepository {
     return this.checkins.find((checkin) => checkin.contractId === contractId && checkin.localDate === localDate) || null;
   }
 
+  getEmployeeCheckinByDate(employeeOpenid, localDate) {
+    return this.checkins.find(
+      (checkin) => checkin.employeeOpenid === employeeOpenid && checkin.localDate === localDate
+    ) || null;
+  }
+
+  listEmployeeCheckinsBetween(employeeOpenid, startLocalDate, endLocalDate) {
+    return this.checkins
+      .filter(
+        (checkin) =>
+          checkin.employeeOpenid === employeeOpenid &&
+          checkin.localDate >= startLocalDate &&
+          checkin.localDate <= endLocalDate
+      )
+      .sort((left, right) => String(left.localDate).localeCompare(String(right.localDate)));
+  }
+
   insertCheckin(checkin) {
     if (this.getCheckin(checkin.cycleId, checkin.localDate)) throw new Error('DUPLICATE_CHECKIN');
     this.checkins.push(checkin);
@@ -237,6 +255,11 @@ class MemoryRepository {
     if (!contract || contract.status !== 'active' || !contract.employeeOpenid) {
       const error = new Error('CONTRACT_NOT_BOUND');
       error.code = 'CONTRACT_NOT_BOUND';
+      throw error;
+    }
+    if (contract.pendingSettlementRequestId) {
+      const error = new Error('SETTLEMENT_REQUEST_PENDING');
+      error.code = 'SETTLEMENT_REQUEST_PENDING';
       throw error;
     }
     const stage = this.cycles.find((item) => item._id === stageId);
@@ -253,6 +276,12 @@ class MemoryRepository {
       }
     });
     checkins.forEach((checkin) => this.insertCheckin(checkin));
+    const earliestBackfill = checkins[0].localDate;
+    const currentStart = stage.startLocalDate || null;
+    if (!currentStart || earliestBackfill < currentStart) {
+      stage.startLocalDate = earliestBackfill;
+    }
+    stage.checkinCount = (Number(stage.checkinCount) || 0) + checkins.length;
     return checkins;
   }
 
@@ -290,8 +319,26 @@ class MemoryRepository {
       error.code = 'DUPLICATE_CHECKIN';
       throw error;
     }
+    const contract = this.contracts.find((item) => item._id === checkin.contractId);
+    if (!contract || contract.status !== 'active' || contract.employeeOpenid !== checkin.employeeOpenid) {
+      const error = new Error('CONTRACT_NOT_BOUND');
+      error.code = 'CONTRACT_NOT_BOUND';
+      throw error;
+    }
+    if (contract.pendingSettlementRequestId) {
+      const error = new Error('SETTLEMENT_REQUEST_PENDING');
+      error.code = 'SETTLEMENT_REQUEST_PENDING';
+      throw error;
+    }
+    const stage = this.cycles.find((item) => item._id === checkin.cycleId);
+    if (!stage || stage.status !== 'open') {
+      const error = new Error('NO_OPEN_CYCLE');
+      error.code = 'NO_OPEN_CYCLE';
+      throw error;
+    }
     this.insertCheckin(checkin);
     this.updateChallenge(challenge._id, { usedAt: checkin.serverTime });
+    stage.checkinCount = (Number(stage.checkinCount) || 0) + 1;
     return checkin;
   }
 
@@ -317,7 +364,47 @@ class MemoryRepository {
 
   insertSettlementRequest(request) {
     if (this.findSettlementRequestById(request._id)) throw new Error('SETTLEMENT_REQUEST_EXISTS');
+    const contract = this.contracts.find((item) => item._id === request.contractId);
+    if (!contract || contract.status !== 'active' || !contract.employeeOpenid) {
+      const error = new Error('CONTRACT_NOT_BOUND');
+      error.code = 'CONTRACT_NOT_BOUND';
+      throw error;
+    }
+    if (contract.pendingSettlementRequestId) {
+      const error = new Error('SETTLEMENT_REQUEST_PENDING');
+      error.code = 'SETTLEMENT_REQUEST_PENDING';
+      throw error;
+    }
+    const stage = this.cycles.find((item) => item._id === request.stageId);
+    if (!stage || stage.contractId !== request.contractId || stage.status !== 'open') {
+      const error = new Error('NO_OPEN_STAGE');
+      error.code = 'NO_OPEN_STAGE';
+      throw error;
+    }
     this.settlement_requests.push(request);
+    contract.pendingSettlementRequestId = request._id;
+    return request;
+  }
+
+  transitionSettlementRequest({ requestId, expectedStatuses, patch, clearContractLock = false }) {
+    const request = this.findSettlementRequestById(requestId);
+    if (!request || !expectedStatuses.includes(request.status)) {
+      const error = new Error('SETTLEMENT_REQUEST_NOT_PENDING');
+      error.code = 'SETTLEMENT_REQUEST_NOT_PENDING';
+      throw error;
+    }
+    const contract = this.contracts.find((item) => item._id === request.contractId);
+    if (
+      !contract ||
+      contract.status !== 'active' ||
+      contract.pendingSettlementRequestId !== requestId
+    ) {
+      const error = new Error('SETTLEMENT_REQUEST_NOT_PENDING');
+      error.code = 'SETTLEMENT_REQUEST_NOT_PENDING';
+      throw error;
+    }
+    Object.assign(request, patch);
+    if (clearContractLock) contract.pendingSettlementRequestId = null;
     return request;
   }
 
@@ -341,6 +428,24 @@ class MemoryRepository {
       error.code = 'NO_OPEN_STAGE';
       throw error;
     }
+    const contract = this.contracts.find((item) => item._id === currentRequest.contractId);
+    if (
+      !contract ||
+      contract.status !== 'active' ||
+      contract.pendingSettlementRequestId !== currentRequest._id
+    ) {
+      const error = new Error('SETTLEMENT_REQUEST_NOT_PENDING');
+      error.code = 'SETTLEMENT_REQUEST_NOT_PENDING';
+      throw error;
+    }
+    if (
+      Number.isFinite(Number(stage.checkinCount)) &&
+      Number(stage.checkinCount) !== Number(currentRequest.days)
+    ) {
+      const error = new Error('SETTLEMENT_STAGE_CHANGED');
+      error.code = 'SETTLEMENT_STAGE_CHANGED';
+      throw error;
+    }
 
     Object.assign(currentRequest, {
       status: 'confirmed',
@@ -356,6 +461,7 @@ class MemoryRepository {
     });
     this.settlements.push(settlement);
     this.insertCycle(nextStage);
+    contract.pendingSettlementRequestId = null;
     return { settlementRequest: currentRequest, settlement, nextStage };
   }
 
@@ -375,6 +481,16 @@ class MemoryRepository {
     if (!stage || stage.contractId !== contractId || stage.status !== 'open') {
       const error = new Error('NO_OPEN_STAGE');
       error.code = 'NO_OPEN_STAGE';
+      throw error;
+    }
+    if (contract.pendingSettlementRequestId) {
+      const error = new Error('SETTLEMENT_REQUEST_PENDING');
+      error.code = 'SETTLEMENT_REQUEST_PENDING';
+      throw error;
+    }
+    if ((Number(stage.checkinCount) || 0) !== 0) {
+      const error = new Error('SETTLE_BEFORE_TERMINATION');
+      error.code = 'SETTLE_BEFORE_TERMINATION';
       throw error;
     }
     Object.assign(contract, contractPatch);
