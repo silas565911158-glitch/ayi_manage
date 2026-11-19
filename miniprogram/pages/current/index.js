@@ -156,7 +156,10 @@ Page({
       checkinDates: (state.checkins || []).map((item) => item.localDate),
       checkinRecords: state.calendarCheckins || [],
       settledDates: state.settledCheckinDates || [],
-      settledRecords: state.settledCalendarCheckins || []
+      settledRecords: [
+        ...(state.settledCalendarCheckins || []),
+        ...(state.historicalCalendarCheckins || [])
+      ]
     });
     const navigation = getCalendarNavigation({
       startLocalDate: state.currentStage.startLocalDate,

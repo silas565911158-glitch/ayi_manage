@@ -418,6 +418,9 @@ async function getCurrentState({ openid, now, repository }) {
       backfillLatest
     )
     : [];
+  const historicalCalendarCheckins = employeeBackfillRangeCheckins
+    .filter((checkin) => checkin.contractId !== contract._id)
+    .map(publicCalendarCheckin);
   return {
     backendVersion: BACKEND_VERSION,
     user: publicUser(user),
@@ -461,6 +464,7 @@ async function getCurrentState({ openid, now, repository }) {
     settledCheckinDates,
     calendarCheckins: checkins.map(publicCalendarCheckin),
     settledCalendarCheckins,
+    historicalCalendarCheckins,
     checkins: checkins.slice().reverse().map(publicCheckin),
     recentCheckins: checkins.slice(-30).reverse().map(publicCheckin),
     nextAction: 'viewStage'

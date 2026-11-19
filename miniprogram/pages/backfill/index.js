@@ -46,6 +46,7 @@ Page({
 
   updateBoard(state, selectedLocalDates) {
     const backfill = state.backfill || {};
+    const checkedLocalDates = backfill.checkedLocalDates || [];
     const board = buildBackfillBoard({
       earliestLocalDate: backfill.earliestLocalDate,
       latestLocalDate: backfill.latestLocalDate,
@@ -55,6 +56,13 @@ Page({
       mode: this.data.mode
     });
     const count = selectedLocalDates.length;
+    const skippedCheckedCount = this.data.mode === 'range' && count > 0
+      ? checkedLocalDates.filter(
+        (localDate) =>
+          localDate >= selectedLocalDates[0] &&
+          localDate <= selectedLocalDates[selectedLocalDates.length - 1]
+      ).length
+      : 0;
     this.setData({
       loading: false,
       state,
@@ -66,7 +74,7 @@ Page({
         ? '请选择需要补录的日期'
         : count === 1 && this.data.mode === 'range'
           ? `已选开始 ${formatCompactDateWithYear(selectedLocalDates[0])}，请点击结束日期`
-          : `已选 ${formatCompactDateWithYear(selectedLocalDates[0])} 至 ${formatCompactDateWithYear(selectedLocalDates[count - 1])} · 共 ${count} 天`,
+          : `已选 ${formatCompactDateWithYear(selectedLocalDates[0])} 至 ${formatCompactDateWithYear(selectedLocalDates[count - 1])} · 共 ${count} 天${skippedCheckedCount ? ` · 已跳过 ${skippedCheckedCount} 天已有打卡` : ''}`,
       error: ''
     });
   },

@@ -96,6 +96,9 @@ describe('release stability', () => {
     const nextState = await employer.call('getCurrentState');
     expect(nextState.data.backfill.eligibleLocalDates).not.toContain('2026-11-05');
     expect(nextState.data.backfill.checkedLocalDates).toContain('2026-11-05');
+    expect(nextState.data.historicalCalendarCheckins).toEqual([
+      expect.objectContaining({ localDate: '2026-11-05' })
+    ]);
     await expect(employer.call('createBackfillCheckins', {
       localDates: ['2026-11-05'],
       workTime: '09:00',
