@@ -259,6 +259,8 @@ describe('project structure', () => {
     expect(settlementStatusJs).toContain('confirmSettlementRequest');
     expect(settlementStatusWxml).toContain('nextStageStartText');
     expect(settlementStatusJs).toContain('nextStageStartText');
+    expect(settlementStatusWxml).toContain('这一期工作');
+    expect(settlementStatusWxml).toContain("{{role === 'employer' ? '实付' : '到账'}}");
     expect(settlementWxss).not.toContain('right: -12rpx');
     expect(settlementWxss).not.toContain('top: -12rpx');
     expect(historyWxml).toContain('合同信息');
@@ -266,7 +268,8 @@ describe('project structure', () => {
     expect(historyWxml).toContain('history-tabs');
     expect(historyWxml).toContain('当前');
     expect(historyWxml).toContain('contract-group');
-    expect(historyWxml).toContain('累计干了');
+    expect(historyWxml).toContain('累计工作');
+    expect(historyWxml).toContain("{{role === 'employer' ? '支付' : '到账'}}");
     expect(historyJs).toContain('USER_NOT_FOUND');
     expect(historyWxml).toContain('结算工资');
     expect(historyWxml).toContain('bindtap="toggleContractInfo"');
@@ -338,6 +341,9 @@ describe('project structure', () => {
     expect(onboardingJs).toContain('this.allowReselect = options.reselect ===');
     expect(terminationJs).toContain('/pages/cooperation-ended/index');
     expect(endedWxml).toContain('重新选择身份');
+    expect(endedWxml).toContain('累计工作');
+    expect(endedWxml).toContain("{{role === 'employer' ? '累计支付' : '累计到账'}}");
+    expect(endedJs).toContain('role: result.data.user.role');
     expect(endedJs).toContain('/pages/onboarding/index?reselect=1');
   });
 

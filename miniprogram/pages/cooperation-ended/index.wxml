@@ -8,8 +8,8 @@
 
     <view class="summary-card">
       <view class="summary-row"><text>已结算</text><text>{{summary.settledStages}} 期</text></view>
-      <view class="summary-row"><text>累计干了</text><text>{{summary.totalSettledDays}} 天</text></view>
-      <view class="summary-row"><text>累计支付</text><text>{{totalPaidText}}</text></view>
+      <view class="summary-row"><text>累计工作</text><text>{{summary.totalSettledDays}} 天</text></view>
+      <view class="summary-row"><text>{{role === 'employer' ? '累计支付' : '累计到账'}}</text><text>{{totalPaidText}}</text></view>
       <view class="summary-row"><text>结束原因</text><text>{{endedReason}}</text></view>
     </view>
 

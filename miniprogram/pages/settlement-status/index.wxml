@@ -6,12 +6,12 @@
     <view class="flow-lead">请核对这一期的天数、计算口径和转账截图。</view>
 
     <view class="status-card">
-      <view class="days">这一期干了 {{state.pendingSettlement.days}} 天</view>
+      <view class="days">这一期工作 {{state.pendingSettlement.days}} 天</view>
       <view class="range">{{state.pendingSettlement.stageStartLocalDate}} 至 {{state.pendingSettlement.workEndLocalDate}}</view>
       <view class="next-stage">确认后新一期从 {{nextStageStartText}} 开始</view>
       <view class="formula">{{explanation.formulaText}} = {{explanation.suggestedText}}</view>
       <view class="contract">{{explanation.contractText}} = {{explanation.dailySalaryText}}</view>
-      <view class="paid">实付 {{paidText}}</view>
+      <view class="paid">{{role === 'employer' ? '实付' : '到账'}} {{paidText}}</view>
       <view wx:if="{{explanation.differenceText}}" class="difference">{{explanation.differenceText}}</view>
       <view wx:if="{{state.pendingSettlement.differenceReason}}" class="reason">原因：{{state.pendingSettlement.differenceReason}}</view>
       <view wx:if="{{state.pendingSettlement.transferProofs.length}}" class="proofs">

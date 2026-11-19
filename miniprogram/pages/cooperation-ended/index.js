@@ -6,6 +6,7 @@ const { formatMoney } = require('../../services/view-state');
 Page({
   data: {
     loading: true,
+    role: '',
     summary: { settledStages: 0, totalSettledDays: 0, totalPaidAmount: 0 },
     totalPaidText: formatMoney(0),
     endedReason: '',
@@ -26,6 +27,7 @@ Page({
       }
       this.setData({
         loading: false,
+        role: result.data.user.role,
         summary: result.data.lastCooperation.summary,
         totalPaidText: formatMoney(result.data.lastCooperation.summary.totalPaidAmount),
         endedReason: result.data.lastCooperation.endedReason || '双方协商结束',

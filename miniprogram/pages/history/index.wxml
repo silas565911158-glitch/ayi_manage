@@ -26,7 +26,7 @@
           <view class="summary-value">{{selectedSummary.totalPaidText}}</view>
         </view>
         <view>
-          <view class="summary-label">累计干了</view>
+          <view class="summary-label">累计工作</view>
           <view class="summary-value">{{selectedSummary.totalSettledDays}} 天</view>
         </view>
       </view>
@@ -40,8 +40,8 @@
         </view>
         <view class="group-summary">
           <text>已结算 {{currentGroup.summary.settledStages}} 期</text>
-          <text>干了 {{currentGroup.summary.totalSettledDays}} 天</text>
-          <text>支付 {{currentGroup.summary.totalPaidText}}</text>
+          <text>工作 {{currentGroup.summary.totalSettledDays}} 天</text>
+          <text>{{role === 'employer' ? '支付' : '到账'}} {{currentGroup.summary.totalPaidText}}</text>
         </view>
         <view class="contract-toggle" data-id="{{currentGroup.id}}" bindtap="toggleContractInfo">
           <view class="contract-toggle-title">合同信息</view>
@@ -90,7 +90,7 @@
             </view>
             <view class="facts">
               <view>
-                <view class="fact-label">干了</view>
+                <view class="fact-label">工作</view>
                 <view class="fact-value">{{item.days}} 天</view>
               </view>
               <view>
@@ -124,8 +124,8 @@
           </view>
           <view class="group-summary">
             <text>已结算 {{group.summary.settledStages}} 期</text>
-            <text>干了 {{group.summary.totalSettledDays}} 天</text>
-            <text>支付 {{group.summary.totalPaidText}}</text>
+            <text>工作 {{group.summary.totalSettledDays}} 天</text>
+            <text>{{role === 'employer' ? '支付' : '到账'}} {{group.summary.totalPaidText}}</text>
           </view>
           <view class="contract-toggle" data-id="{{group.id}}" bindtap="toggleContractInfo">
             <view class="contract-toggle-title">合同信息</view>
@@ -174,7 +174,7 @@
               </view>
               <view class="facts">
                 <view>
-                  <view class="fact-label">干了</view>
+                  <view class="fact-label">工作</view>
                   <view class="fact-value">{{item.days}} 天</view>
                 </view>
                 <view>
