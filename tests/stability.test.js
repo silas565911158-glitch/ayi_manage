@@ -96,9 +96,23 @@ describe('release stability', () => {
     const nextState = await employer.call('getCurrentState');
     expect(nextState.data.backfill.eligibleLocalDates).not.toContain('2026-11-05');
     expect(nextState.data.backfill.checkedLocalDates).toContain('2026-11-05');
-    expect(nextState.data.historicalCalendarCheckins).toEqual([
-      expect.objectContaining({ localDate: '2026-11-05' })
-    ]);
+    expect(nextState.data.historicalCalendarCheckins).toEqual([]);
+    expect(nextState.data.settlementSummary).toEqual({
+      settledStages: 0,
+      totalPaidAmount: 0,
+      totalSettledDays: 0
+    });
+    expect(nextState.data.lifetimeSummary).toEqual({
+      settledStages: 1,
+      totalPaidAmount: 307.69,
+      totalSettledDays: 1
+    });
+    expect(nextState.data.cumulativeWorkDays).toBe(0);
+    expect(nextState.data.lifetimeWorkDays).toBe(1);
+    const employeeState = await employee.call('getCurrentState');
+    expect(employeeState.data.historicalCalendarCheckins).toEqual([]);
+    expect(employeeState.data.cumulativeWorkDays).toBe(0);
+    expect(employeeState.data.lifetimeWorkDays).toBe(1);
     await expect(employer.call('createBackfillCheckins', {
       localDates: ['2026-11-05'],
       workTime: '09:00',

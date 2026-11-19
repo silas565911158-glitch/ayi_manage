@@ -93,7 +93,7 @@ Page({
           stageStartText: formatCompactDateWithYear(state.currentStage.startLocalDate),
           cumulativeWorkText: state.user.role === 'employee'
             ? `累计工作 ${state.cumulativeWorkDays || 0} 天${state.currentStage.backfillDays ? ` · 含补录 ${state.currentStage.backfillDays} 天` : ''}`
-            : `历史已结算 ${state.lifetimeSummary ? state.lifetimeSummary.settledStages : state.settlementSummary.settledStages} 期`,
+            : `当前合作已结 ${state.settlementSummary.settledStages} 期`,
           totalPaidCompactText: formatCompactMoney(
             state.lifetimeSummary ? state.lifetimeSummary.totalPaidAmount : state.settlementSummary.totalPaidAmount
           ),

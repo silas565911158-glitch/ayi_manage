@@ -15,7 +15,7 @@ const { BusinessError } = require('./errors');
 
 const INVITE_TTL_MS = 24 * 60 * 60 * 1000;
 const CHALLENGE_TTL_MS = 2 * 60 * 1000;
-const BACKEND_VERSION = '1.1.3';
+const BACKEND_VERSION = '1.1.4';
 
 async function handleAction({ action, payload = {}, openid, now = new Date(), repository }) {
   if (!openid) throw new BusinessError('UNAUTHENTICATED', '缺少用户身份');
@@ -386,6 +386,7 @@ async function getCurrentState({ openid, now, repository }) {
     !todayCheckin;
 
   const settlementRecords = await repository.listSettlements(contract._id);
+  const settlementSummary = summarizeSettlements(settlementRecords);
   const participantContracts = await repository.listContractsForParticipant(openid);
   const lifetimeSettlements = [];
   for (const item of participantContracts) {
@@ -395,6 +396,7 @@ async function getCurrentState({ openid, now, repository }) {
     lifetimeSettlements.push(...records);
   }
   const lifetimeSummary = summarizeSettlements(lifetimeSettlements);
+  const cumulativeWorkDays = settlementSummary.totalSettledDays + checkins.length;
   const settledCheckinDates = await listSettledCheckinDates(settlementRecords, repository);
   const settledCalendarCheckins = contractCheckins
     .filter((checkin) => checkin.cycleId !== cycle._id)
@@ -418,9 +420,10 @@ async function getCurrentState({ openid, now, repository }) {
       backfillLatest
     )
     : [];
-  const historicalCalendarCheckins = employeeBackfillRangeCheckins
-    .filter((checkin) => checkin.contractId !== contract._id)
-    .map(publicCalendarCheckin);
+  // The current tab is scoped to the active cooperation. Employee records from
+  // other cooperations are still passed to buildBackfillState to keep backfill
+  // dates unique, but they must not leak into the current calendar.
+  const historicalCalendarCheckins = [];
   return {
     backendVersion: BACKEND_VERSION,
     user: publicUser(user),
@@ -435,9 +438,9 @@ async function getCurrentState({ openid, now, repository }) {
       dailySalary: calculation.dailySalary,
       suggestedAmount: calculation.amount
     },
-  cumulativeWorkDays: lifetimeSummary.totalSettledDays + checkins.length,
-  lifetimeSummary,
-  lifetimeWorkDays: lifetimeSummary.totalSettledDays + checkins.length,
+    cumulativeWorkDays,
+    lifetimeSummary,
+    lifetimeWorkDays: lifetimeSummary.totalSettledDays + checkins.length,
     pendingSettlement: pendingSettlement ? publicSettlementRequest(pendingSettlement) : null,
     backfill: buildBackfillState({
       stage: cycle,
@@ -446,7 +449,7 @@ async function getCurrentState({ openid, now, repository }) {
       pending: Boolean(pendingSettlement),
       employeeCheckins: employeeBackfillRangeCheckins
     }),
-    settlementSummary: summarizeSettlements(settlementRecords),
+    settlementSummary,
     progress: {
       checkinDays: checkins.length,
       targetDays: contract.targetDays,
