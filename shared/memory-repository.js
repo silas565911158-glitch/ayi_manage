@@ -227,23 +227,6 @@ class MemoryRepository {
     return this.checkins.find((checkin) => checkin.contractId === contractId && checkin.localDate === localDate) || null;
   }
 
-  getEmployeeCheckinByDate(employeeOpenid, localDate) {
-    return this.checkins.find(
-      (checkin) => checkin.employeeOpenid === employeeOpenid && checkin.localDate === localDate
-    ) || null;
-  }
-
-  listEmployeeCheckinsBetween(employeeOpenid, startLocalDate, endLocalDate) {
-    return this.checkins
-      .filter(
-        (checkin) =>
-          checkin.employeeOpenid === employeeOpenid &&
-          checkin.localDate >= startLocalDate &&
-          checkin.localDate <= endLocalDate
-      )
-      .sort((left, right) => String(left.localDate).localeCompare(String(right.localDate)));
-  }
-
   insertCheckin(checkin) {
     if (this.getCheckin(checkin.cycleId, checkin.localDate)) throw new Error('DUPLICATE_CHECKIN');
     this.checkins.push(checkin);

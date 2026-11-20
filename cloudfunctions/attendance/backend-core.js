@@ -15,7 +15,7 @@ const { BusinessError } = require('./errors');
 
 const INVITE_TTL_MS = 24 * 60 * 60 * 1000;
 const CHALLENGE_TTL_MS = 2 * 60 * 1000;
-const BACKEND_VERSION = '1.1.5';
+const BACKEND_VERSION = '1.1.6';
 
 async function handleAction({ action, payload = {}, openid, now = new Date(), repository }) {
   if (!openid) throw new BusinessError('UNAUTHENTICATED', '缺少用户身份');
@@ -409,20 +409,8 @@ async function getCurrentState({ openid, now, repository }) {
   ) {
     exposedContract.inviteCode = null;
   }
-  const backfillToday = localDate;
-  const backfillRollingStart = addLocalDays(backfillToday, -30);
-  const backfillLatest = addLocalDays(backfillToday, -1);
-  const employeeBackfillRangeCheckins = contract.employeeOpenid &&
-    typeof repository.listEmployeeCheckinsBetween === 'function'
-    ? await repository.listEmployeeCheckinsBetween(
-      contract.employeeOpenid,
-      backfillRollingStart,
-      backfillLatest
-    )
-    : [];
-  // The current tab is scoped to the active cooperation. Employee records from
-  // other cooperations are still passed to buildBackfillState to keep backfill
-  // dates unique, but they must not leak into the current calendar.
+  // Attendance facts and backfill eligibility are scoped to the active contract.
+  // A previous cooperation must not make dates appear occupied for this employer.
   const historicalCalendarCheckins = [];
   return {
     backendVersion: BACKEND_VERSION,
@@ -446,8 +434,7 @@ async function getCurrentState({ openid, now, repository }) {
       stage: cycle,
       checkins: contractCheckins,
       today: localDate,
-      pending: Boolean(pendingSettlement),
-      employeeCheckins: employeeBackfillRangeCheckins
+      pending: Boolean(pendingSettlement)
     }),
     settlementSummary,
     progress: {
@@ -634,10 +621,8 @@ async function createBackfillCheckins({ payload, openid, now, repository }) {
   });
 
   for (const localDate of localDates) {
-    if (typeof repository.getEmployeeCheckinByDate === 'function') {
-      const existing = await repository.getEmployeeCheckinByDate(contract.employeeOpenid, localDate);
-      if (existing) throw new BusinessError('CHECKIN_ALREADY_EXISTS', '该日期已有打卡记录');
-    }
+    const existing = await repository.getContractCheckin(contract._id, localDate);
+    if (existing) throw new BusinessError('CHECKIN_ALREADY_EXISTS', '该日期已有打卡记录');
   }
 
   const checkins = localDates.map((localDate) => ({
@@ -1069,17 +1054,14 @@ function averageArrivalTime(checkins) {
   return `${String(Math.floor(average / 60)).padStart(2, '0')}:${String(average % 60).padStart(2, '0')}`;
 }
 
-function buildBackfillState({ stage, checkins, today, pending, employeeCheckins = [] }) {
+function buildBackfillState({ stage, checkins, today, pending }) {
   const rollingStart = addLocalDays(today, -30);
   const stageStart = cycleStartLocalDate(stage);
   const earliest = stage.cycleIndex > 1 && stageStart > rollingStart
     ? stageStart
     : rollingStart;
   const latest = addLocalDays(today, -1);
-  const existing = new Set([
-    ...checkins.map((checkin) => checkin.localDate),
-    ...employeeCheckins.map((checkin) => checkin.localDate)
-  ]);
+  const existing = new Set(checkins.map((checkin) => checkin.localDate));
   const eligibleLocalDates = [];
   const checkedLocalDates = [];
   if (latest >= earliest) {

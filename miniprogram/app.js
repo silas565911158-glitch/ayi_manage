@@ -2,6 +2,6 @@
 
 App({
   globalData: {
-    version: '1.1.5'
+    version: '1.1.6'
   }
 });

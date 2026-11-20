@@ -73,7 +73,7 @@ describe('release stability', () => {
     });
   });
 
-  test('prevents the same employee from backfilling one work date into two contracts', async () => {
+  test('isolates backfill records by contract instead of leaking prior cooperation dates', async () => {
     let now = fixedDate('2026-11-10');
     const backend = new MockBackend({ storage: new MemoryStorage(), now: () => now });
     const employer = backend.as('mock-employer');
@@ -94,8 +94,8 @@ describe('release stability', () => {
     const second = await employer.call('createContract', validContract({ startDate: '2026-11-11' }));
     await employee.call('joinContract', { inviteCode: second.data.inviteCode });
     const nextState = await employer.call('getCurrentState');
-    expect(nextState.data.backfill.eligibleLocalDates).not.toContain('2026-11-05');
-    expect(nextState.data.backfill.checkedLocalDates).toContain('2026-11-05');
+    expect(nextState.data.backfill.eligibleLocalDates).toContain('2026-11-05');
+    expect(nextState.data.backfill.checkedLocalDates).not.toContain('2026-11-05');
     expect(nextState.data.historicalCalendarCheckins).toEqual([]);
     expect(nextState.data.settlementSummary).toEqual({
       settledStages: 0,
@@ -111,13 +111,24 @@ describe('release stability', () => {
     expect(nextState.data.lifetimeWorkDays).toBe(1);
     const employeeState = await employee.call('getCurrentState');
     expect(employeeState.data.historicalCalendarCheckins).toEqual([]);
+    expect(employeeState.data.backfill.checkedLocalDates).not.toContain('2026-11-05');
+    expect(employeeState.data.backfill.eligibleLocalDates).toContain('2026-11-05');
     expect(employeeState.data.cumulativeWorkDays).toBe(0);
     expect(employeeState.data.lifetimeWorkDays).toBe(1);
-    await expect(employer.call('createBackfillCheckins', {
+    await employer.call('createBackfillCheckins', {
       localDates: ['2026-11-05'],
       workTime: '09:00',
       reason: '前期补录'
-    })).rejects.toMatchObject({ code: 'CHECKIN_ALREADY_EXISTS' });
+    });
+    const afterBackfill = await employer.call('getCurrentState');
+    expect(afterBackfill.data.currentStage).toMatchObject({
+      days: 1,
+      backfillDays: 1,
+      startLocalDate: '2026-11-05'
+    });
+    expect(afterBackfill.data.calendarCheckins).toEqual([
+      expect.objectContaining({ localDate: '2026-11-05', source: 'employer_backfill' })
+    ]);
   });
 
   test('uses one contract lifecycle lock for settlement, work, and termination writes', () => {

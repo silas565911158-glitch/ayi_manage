@@ -257,24 +257,6 @@ class CloudDatabaseRepository {
     return this.first('checkins', { contractId, localDate });
   }
 
-  async getEmployeeCheckinByDate(employeeOpenid, localDate) {
-    return this.first('checkins', { employeeOpenid, localDate });
-  }
-
-  async listEmployeeCheckinsBetween(employeeOpenid, startLocalDate, endLocalDate) {
-    const command = this.db.command;
-    const where = command
-      ? {
-        employeeOpenid,
-        localDate: command.gte(startLocalDate).and(command.lte(endLocalDate))
-      }
-      : {
-        employeeOpenid,
-        localDate: { $gte: startLocalDate, $lte: endLocalDate }
-      };
-    return this.listDocuments('checkins', where, 'localDate', 'asc', this.queryPageSize);
-  }
-
   async insertCheckin(checkin) {
     await this.collection('checkins').add({ data: checkin });
     return checkin;
