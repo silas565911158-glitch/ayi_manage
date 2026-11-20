@@ -5,8 +5,30 @@
 .termination-summary { margin-top: 20rpx; padding: 22rpx; border-radius: 20rpx; background: #F4EDE1; }
 .summary-row { display: flex; justify-content: space-between; gap: 24rpx; color: #555047; font-size: 26rpx; line-height: 50rpx; }
 .summary-row text:last-child { max-width: 430rpx; color: #22262D; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
-.reason-list { display: flex; flex-wrap: wrap; gap: 12rpx; }
-.reason-chip { display: inline-flex; align-items: center; justify-content: center; min-height: 88rpx; margin: 0; padding: 0 24rpx; border: 2rpx solid #E4D8C7; border-radius: 999rpx; background: #FFFFFF; color: #555047; font-size: 26rpx; font-weight: 600; line-height: 88rpx; }
+.reason-list {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.reason-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 calc(50% - 12rpx);
+  box-sizing: border-box;
+  width: calc(50% - 12rpx);
+  min-height: 88rpx;
+  margin: 0 12rpx 12rpx 0;
+  padding: 0 20rpx;
+  border: 2rpx solid #E4D8C7;
+  border-radius: 999rpx;
+  background: #FFFFFF;
+  color: #555047;
+  font-size: 26rpx;
+  font-weight: 600;
+  line-height: 88rpx;
+  white-space: nowrap;
+}
 .reason-chip.selected { border-color: #C9402A; background: #FFF0EB; color: #8E2B1A; font-weight: 700; }
 .other-input { box-sizing: border-box; width: 100%; min-height: 112rpx; margin-top: 24rpx; padding: 20rpx 24rpx; border: 2rpx solid #D9CBB6; border-radius: 22rpx; background: #FFFFFF; color: #22262D; font-size: 26rpx; line-height: 36rpx; }
 .termination-button { width: 100%; min-height: 104rpx; margin-top: 32rpx; border-radius: 26rpx; font-size: 34rpx; line-height: 104rpx; }

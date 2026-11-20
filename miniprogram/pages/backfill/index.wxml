@@ -55,7 +55,7 @@
             <button
               wx:for="{{reasons}}"
               wx:key="*this"
-              class="reason-chip {{reason === item ? 'selected' : ''}} {{item === '其他' ? ' full' : ''}}"
+              class="reason-chip {{reason === item ? 'selected' : ''}}"
               data-reason="{{item}}"
               bindtap="selectReason"
             >{{item}}</button>
