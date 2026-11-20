@@ -15,7 +15,7 @@ const { BusinessError } = require('./errors');
 
 const INVITE_TTL_MS = 24 * 60 * 60 * 1000;
 const CHALLENGE_TTL_MS = 2 * 60 * 1000;
-const BACKEND_VERSION = '1.1.8';
+const BACKEND_VERSION = '1.1.9';
 
 async function handleAction({ action, payload = {}, openid, now = new Date(), repository }) {
   if (!openid) throw new BusinessError('UNAUTHENTICATED', '缺少用户身份');

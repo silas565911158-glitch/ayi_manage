@@ -55,21 +55,21 @@
             <button
               wx:for="{{reasons}}"
               wx:key="*this"
-              class="reason-chip {{reason === item ? 'selected' : ''}}"
+              class="reason-chip {{reason === item ? 'selected' : ''}} {{item === '其他' ? ' full' : ''}}"
               data-reason="{{item}}"
               bindtap="selectReason"
             >{{item}}</button>
           </view>
+          <textarea
+            wx:if="{{reason === '其他'}}"
+            class="other-input"
+            value="{{otherReason}}"
+            bindinput="inputOtherReason"
+            maxlength="120"
+            placeholder="填写具体原因"
+          />
         </view>
       </view>
-      <textarea
-        wx:if="{{reason === '其他'}}"
-        class="other-input"
-        value="{{otherReason}}"
-        bindinput="inputOtherReason"
-        maxlength="120"
-        placeholder="填写具体原因"
-      />
     </view>
 
     <view wx:if="{{error}}" class="status-error">{{error}}</view>

@@ -308,15 +308,21 @@
   font-weight: 700;
 }
 
+.reason-chip.full {
+  flex: 0 0 100%;
+  width: 100%;
+  margin-right: 0;
+}
+
 .other-input {
   box-sizing: border-box;
   width: 100%;
   min-height: 112rpx;
-  margin-top: 24rpx;
+  margin-top: 0;
   padding: 20rpx 24rpx;
-  border: 2rpx solid #D9CBB6;
-  border-radius: 22rpx;
-  background: #FFFFFF;
+  border: 2rpx solid #E4D8C7;
+  border-radius: 18rpx;
+  background: #FAF7F1;
   color: #22262D;
   font-size: 26rpx;
 }

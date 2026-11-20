@@ -314,9 +314,15 @@ describe('project structure', () => {
     expect(backfillWxss).toContain('padding: 28rpx');
     expect(backfillWxml).toContain('近30天暂无可补日期');
     expect(backfillWxml).not.toContain('scroll-x');
-    expect(backfillWxml).not.toContain('reason-chip.full');
+    expect(backfillWxml).toContain("item === '其他' ? ' full' : ''");
     expect(backfillWxss).toContain('flex: 0 0 calc(50% - 14rpx)');
     expect(backfillWxss).toContain('margin: 0 14rpx 14rpx 0');
+    expect(backfillWxss).toContain('.reason-chip.full');
+    expect(backfillWxss).toContain('flex: 0 0 100%');
+    expect(backfillWxml.indexOf('class="reason-list"'))
+      .toBeLessThan(backfillWxml.indexOf('class="other-input"'));
+    expect(backfillWxml.indexOf('class="other-input"'))
+      .toBeLessThan(backfillWxml.indexOf('class="backfill-footer"'));
     expect(backfillWxss).toContain('.board-day.range-start');
     expect(backfillWxss).toContain('.board-day.range-end');
 
