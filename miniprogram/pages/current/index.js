@@ -95,7 +95,7 @@ Page({
             ? `累计工作 ${state.cumulativeWorkDays || 0} 天${state.currentStage.backfillDays ? ` · 含补录 ${state.currentStage.backfillDays} 天` : ''}`
             : `当前合作已结 ${state.settlementSummary.settledStages} 期`,
           totalPaidCompactText: formatCompactMoney(
-            state.lifetimeSummary ? state.lifetimeSummary.totalPaidAmount : state.settlementSummary.totalPaidAmount
+            state.settlementSummary ? state.settlementSummary.totalPaidAmount : 0
           ),
           todayClockText: checkinTime || '--:--',
           checkinUnavailableText: state.today.localDate < state.currentStage.startLocalDate

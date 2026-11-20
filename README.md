@@ -90,6 +90,13 @@ v1.1.6 合同数据隔离：
  - 新合作创建后从 0 天开始；旧合作结算只保留在历史档案。
  - 同一份合同内同一天仍只能有一条上工记录。
 
+v1.1.7 当期隔离与结算重试：
+
+ - 当期信息区的「本期已上工」和今日打卡状态按下边缘对齐，避免左右两列视觉重心错位。
+ - 雇主端「累计支付」改为当前合作口径，不再在当期展示历史合作的期数和金额。
+ - 补录原因选项保持一行两个；「其他」独占整行。
+ - 取消有争议的结算单后，雇主可对同一期重新发起结算。
+
 其他页面：
 
 - 身份选择；
@@ -171,7 +178,7 @@ module.exports = {
    - `checkins.contractId + localDate + source`
    - `challenges.token`（唯一）
    - `checkin_attempts.contractId + serverTime`
-   - `settlement_requests.stageId`（唯一）
+   - `settlement_requests.stageId + employerCreatedAt`
    - `settlement_requests.contractId + status`
    - `settlements.stageId`（唯一）
    - `settlements.contractId + settledAt`

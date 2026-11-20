@@ -178,6 +178,17 @@ describe('two-party settlement flow', () => {
     const history = await employer.call('listHistory');
     expect(history.data.summary).toMatchObject({ settledStages: 0, totalPaidAmount: 0 });
     expect(history.data.settlements).toHaveLength(0);
+
+    const reopenedRequest = await employer.call('createSettlementRequest', {
+      paidAmount: 307.69,
+      transferProofs: [{ fileId: 'wxfile://transfer-2.png' }]
+    });
+    expect(reopenedRequest.data.settlementRequest).toMatchObject({
+      status: 'pending_employee',
+      paidAmount: 307.69
+    });
+    const reopenedState = await employee.call('getCurrentState');
+    expect(reopenedState.data.pendingSettlement.status).toBe('pending_employee');
   });
 
   test('history summarizes confirmed stages and exposes payment proofs', async () => {

@@ -59,7 +59,7 @@
           <view class="metric-value-row">
             <text class="metric-value amount">{{totalPaidCompactText}}</text>
           </view>
-          <view class="metric-label">累计支付 {{state.lifetimeSummary.settledStages}} 期</view>
+          <view class="metric-label">累计支付 {{state.settlementSummary.settledStages}} 期</view>
         </view>
       </view>
 

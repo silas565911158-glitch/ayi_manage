@@ -15,7 +15,7 @@ const { BusinessError } = require('./errors');
 
 const INVITE_TTL_MS = 24 * 60 * 60 * 1000;
 const CHALLENGE_TTL_MS = 2 * 60 * 1000;
-const BACKEND_VERSION = '1.1.6';
+const BACKEND_VERSION = '1.1.7';
 
 async function handleAction({ action, payload = {}, openid, now = new Date(), repository }) {
   if (!openid) throw new BusinessError('UNAUTHENTICATED', '缺少用户身份');
@@ -387,15 +387,6 @@ async function getCurrentState({ openid, now, repository }) {
 
   const settlementRecords = await repository.listSettlements(contract._id);
   const settlementSummary = summarizeSettlements(settlementRecords);
-  const participantContracts = await repository.listContractsForParticipant(openid);
-  const lifetimeSettlements = [];
-  for (const item of participantContracts) {
-    const records = item._id === contract._id
-      ? settlementRecords
-      : await repository.listSettlements(item._id);
-    lifetimeSettlements.push(...records);
-  }
-  const lifetimeSummary = summarizeSettlements(lifetimeSettlements);
   const cumulativeWorkDays = settlementSummary.totalSettledDays + checkins.length;
   const settledCheckinDates = await listSettledCheckinDates(settlementRecords, repository);
   const settledCalendarCheckins = contractCheckins
@@ -427,8 +418,6 @@ async function getCurrentState({ openid, now, repository }) {
       suggestedAmount: calculation.amount
     },
     cumulativeWorkDays,
-    lifetimeSummary,
-    lifetimeWorkDays: lifetimeSummary.totalSettledDays + checkins.length,
     pendingSettlement: pendingSettlement ? publicSettlementRequest(pendingSettlement) : null,
     backfill: buildBackfillState({
       stage: cycle,

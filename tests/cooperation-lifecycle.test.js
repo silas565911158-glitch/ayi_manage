@@ -227,12 +227,13 @@ describe('cooperation lifecycle', () => {
     const nextContract = await employer.call('createContract', validContract({ startDate: '2026-11-20' }));
     await employee.call('joinContract', { inviteCode: nextContract.data.inviteCode });
     const nextState = await employer.call('getCurrentState');
-    expect(nextState.data.lifetimeSummary).toEqual({
-      settledStages: 1,
-      totalPaidAmount: 307.69,
-      totalSettledDays: 1
+    expect(nextState.data.settlementSummary).toEqual({
+      settledStages: 0,
+      totalPaidAmount: 0,
+      totalSettledDays: 0
     });
-    expect(nextState.data.lifetimeWorkDays).toBe(1);
+    expect(nextState.data).not.toHaveProperty('lifetimeSummary');
+    expect(nextState.data).not.toHaveProperty('lifetimeWorkDays');
     const nextHistory = await employer.call('listHistory');
     expect(nextHistory.data.contracts).toHaveLength(2);
     expect(nextHistory.data.contract).toMatchObject({ status: 'active' });

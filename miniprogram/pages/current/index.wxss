@@ -78,7 +78,7 @@
 
 .summary-metrics {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   height: 164rpx;
   margin-top: 10rpx;
 }

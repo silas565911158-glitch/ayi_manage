@@ -102,19 +102,26 @@ describe('release stability', () => {
       totalPaidAmount: 0,
       totalSettledDays: 0
     });
-    expect(nextState.data.lifetimeSummary).toEqual({
-      settledStages: 1,
-      totalPaidAmount: 307.69,
-      totalSettledDays: 1
-    });
     expect(nextState.data.cumulativeWorkDays).toBe(0);
-    expect(nextState.data.lifetimeWorkDays).toBe(1);
+    expect(nextState.data.settlementSummary).toEqual({
+      settledStages: 0,
+      totalPaidAmount: 0,
+      totalSettledDays: 0
+    });
+    expect(nextState.data).not.toHaveProperty('lifetimeSummary');
+    expect(nextState.data).not.toHaveProperty('lifetimeWorkDays');
     const employeeState = await employee.call('getCurrentState');
     expect(employeeState.data.historicalCalendarCheckins).toEqual([]);
     expect(employeeState.data.backfill.checkedLocalDates).not.toContain('2026-11-05');
     expect(employeeState.data.backfill.eligibleLocalDates).toContain('2026-11-05');
     expect(employeeState.data.cumulativeWorkDays).toBe(0);
-    expect(employeeState.data.lifetimeWorkDays).toBe(1);
+    expect(employeeState.data.settlementSummary).toEqual({
+      settledStages: 0,
+      totalPaidAmount: 0,
+      totalSettledDays: 0
+    });
+    expect(employeeState.data).not.toHaveProperty('lifetimeSummary');
+    expect(employeeState.data).not.toHaveProperty('lifetimeWorkDays');
     await employer.call('createBackfillCheckins', {
       localDates: ['2026-11-05'],
       workTime: '09:00',

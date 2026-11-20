@@ -135,6 +135,7 @@ describe('project structure', () => {
     expect(currentWxml).toContain('summary-metrics');
     expect(currentWxml).toContain('metric-primary');
     expect(currentWxml).toContain('today-status');
+    expect(currentWxss).toMatch(/\.summary-metrics\s*\{\s*display: flex;\s*align-items: flex-end;/);
     expect(currentWxml).toContain('checkin-face');
     expect(currentWxml).toContain('checkin-done');
     expect(currentWxml).toContain('{{todayClockText}} 打卡');
@@ -168,7 +169,8 @@ describe('project structure', () => {
     expect(currentWxml).toContain('bindtap="goSettlement"');
     expect(currentWxml).not.toContain('flat-action-button');
     expect(currentWxml).toContain('{{totalPaidCompactText}}');
-    expect(currentWxml).toContain('累计支付 {{state.lifetimeSummary.settledStages}} 期');
+    expect(currentWxml).toContain('累计支付 {{state.settlementSummary.settledStages}} 期');
+    expect(currentWxml).not.toContain('state.lifetimeSummary');
     expect(currentWxml).toContain('cumulativeWorkText');
     expect(currentWxml).not.toContain('quick-links');
     expect(currentWxml).toContain('auxiliary-panel');
@@ -312,6 +314,9 @@ describe('project structure', () => {
     expect(backfillWxss).toContain('padding: 28rpx');
     expect(backfillWxml).toContain('近30天暂无可补日期');
     expect(backfillWxml).not.toContain('scroll-x');
+    expect(backfillWxml).toContain("item === '其他' ? ' full' : ''");
+    expect(backfillWxss).toContain('.reason-chip.full');
+    expect(backfillWxss).toContain('flex: 1 1 100%');
     expect(backfillWxss).toContain('.board-day.range-start');
     expect(backfillWxss).toContain('.board-day.range-end');
 
